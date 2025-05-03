@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Unigo" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@color/onBackground</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+    <style name="rounded_corners" parent="@style/Theme.UniGO">>
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+    <style name="menu_theme" parent="@style/Theme.UniGO">
+        <item name="android:textColor">@color/onSurface</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:backgroundTint">@color/background</item>
+    </style>
+    <style name="AppTheme.NavigationView" parent="@style/Theme.UniGO">
+        <item name="itemIconTint">@color/onBackground</item>
+        <item name="itemTextColor">@color/onBackground</item>
+        <item name="android:background">@color/background</item>
+        <item name="android:layout_width">match_parent</item>
+    </style>
+    <style name="RoundedDialog" parent="">
+        <item name="android:background">@color/surface</item>
+    </style>
+</resources>

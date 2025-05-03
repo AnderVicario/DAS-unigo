@@ -8,12 +8,13 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -171,7 +172,16 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
+        window.setStatusBarColor(ContextCompat.getColor(this, R.color.onBackground));
+
+        WindowInsetsController insetsController = window.getInsetsController();
+        if (insetsController != null) {
+            insetsController.setSystemBarsAppearance(
+                    0,
+                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS |
+                            WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+            );
+        }
     }
 
     private void initializeMap() {
