@@ -22,6 +22,7 @@ import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -60,11 +61,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         setupWindow();
 
+        ImageView ivLogo = findViewById(R.id.iv_logo);
         int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
         if (currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
             initializeMap("dark");
+            ivLogo.setImageResource(R.drawable.logo_dark);
         } else {
             initializeMap("light");
+            ivLogo.setImageResource(R.drawable.logo_light);
         }
         configureZoomControls();
         setupMapEvents();
