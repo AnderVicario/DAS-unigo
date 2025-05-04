@@ -2,19 +2,25 @@ package com.unigo;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.widget.ImageButton;
 
 import androidx.activity.EdgeToEdge;
@@ -51,22 +57,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setupWindow();
         setContentView(R.layout.activity_main);
-
-        // Configurar el botón
-        ExtendedFloatingActionButton buttonSend = findViewById(R.id.button_send);
-        buttonSend.setOnClickListener(v -> {
-            if (currentMarker != null) {
-                GeoPoint position = currentMarker.getPosition();
-                // Formatear las coordenadas a 4 decimales
-                String location = String.format("%.4f, %.4f", position.getLatitude(), position.getLongitude());
-                Intent data = new Intent();
-                data.putExtra("location", location);
-                setResult(RESULT_OK, data);
-                finish();
-            }
-        });
+        setupWindow();
 
         int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
         if (currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
@@ -178,21 +170,39 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupWindow() {
         EdgeToEdge.enable(this);
+        View view = findViewById(R.id.main);
         Window window = getWindow();
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.setStatusBarColor(getResources().getColor(R.color.background));
 
-        // Hacer transparentes las barras del sistema
-        window.setStatusBarColor(Color.TRANSPARENT);
-        window.setNavigationBarColor(Color.TRANSPARENT);
+        int densityDpi;
 
-        // Configurar comportamiento inmersivo
-        window.setDecorFitsSystemWindows(false);
-        WindowInsetsController controller = window.getInsetsController();
-        if (controller != null) {
-            controller.setSystemBarsBehavior(
-                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            );
+        WindowMetrics windowMetrics = getWindowManager().getCurrentWindowMetrics();
+        WindowInsets insets = windowMetrics.getWindowInsets();
+        Insets statusBarInsets = insets.getInsetsIgnoringVisibility(WindowInsets.Type.statusBars());
+        densityDpi = getResources().getConfiguration().densityDpi;
+
+        int statusBarHeight;
+        switch (densityDpi) {
+            case DisplayMetrics.DENSITY_HIGH:
+                statusBarHeight = 38;
+                break;
+            case DisplayMetrics.DENSITY_MEDIUM:
+                statusBarHeight = 25;
+                break;
+            case DisplayMetrics.DENSITY_LOW:
+                statusBarHeight = 19;
+                break;
+            default:
+                statusBarHeight = 25;
         }
+
+        int dpValue = statusBarHeight;
+        float scale = getResources().getDisplayMetrics().density;
+        int topMarginInPx = (int) (dpValue * scale + 0.5f);
+
+        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+        layoutParams.topMargin = topMarginInPx;
+        view.setLayoutParams(layoutParams);
     }
 
     private void initializeMap(String mode) {
@@ -265,9 +275,6 @@ public class MainActivity extends AppCompatActivity {
         removeExistingMarker();
         addNewMarker(position);
         showCoordinatesToast(position);
-
-        ExtendedFloatingActionButton buttonSend = findViewById(R.id.button_send);
-        buttonSend.setVisibility(View.VISIBLE);
     }
 
     private void removeExistingMarker() {
