@@ -3,4 +3,10 @@
     <string name="selected_marker">Selected marker</string>
     <string name="snackbar_warning_location_permission">No location warning</string>
     <string name="select_location">Select Location</string>
+    <string name="calculating_route">Calculating route...</string>
+    <string name="route_calculated">Route Calculated</string>
+    <string name="location_not_available">Location not available.</string>
+    <string name="destination_marker">Destination Marker</string>
+    <string name="calculate_route">Calculate Route</string>
+    <string name="no_destination_selected">No destination selected.</string>
 </resources>
