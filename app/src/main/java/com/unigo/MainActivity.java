@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -38,6 +39,8 @@ import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.util.Objects;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 1;
@@ -65,7 +68,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        initializeMap();
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        if (currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
+            initializeMap("dark");
+        } else {
+            initializeMap("light");
+        }
         configureZoomControls();
         setupMapEvents();
         requestLocationPermission();
@@ -172,35 +180,53 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(ContextCompat.getColor(this, R.color.onBackground));
 
-        WindowInsetsController insetsController = window.getInsetsController();
-        if (insetsController != null) {
-            insetsController.setSystemBarsAppearance(
-                    0,
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS |
-                            WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+        // Hacer transparentes las barras del sistema
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+
+        // Configurar comportamiento inmersivo
+        window.setDecorFitsSystemWindows(false);
+        WindowInsetsController controller = window.getInsetsController();
+        if (controller != null) {
+            controller.setSystemBarsBehavior(
+                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             );
         }
     }
 
-    private void initializeMap() {
+    private void initializeMap(String mode) {
         Configuration.getInstance().load(getApplicationContext(), getPreferences(MODE_PRIVATE));
         map = findViewById(R.id.map);
 
-        map.setTileSource(new XYTileSource("CartoVoyager", 0, 20, 512, ".png",
-                new String[] { "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
-                        "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
-                        "https://c.basemaps.cartocdn.com/rastertiles/voyager/" }) {
-            @Override
-            public String getTileURLString(long pMapTileIndex) {
-                return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
-                        MapTileIndex.getX(pMapTileIndex) + "/" +
-                        MapTileIndex.getY(pMapTileIndex) + "@2x.png";
-            }
-        });
+        if (Objects.equals(mode, "light")){
+            map.setTileSource(new XYTileSource("CartoVoyager", 0, 20, 512, ".png",
+                    new String[] { "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
+                            "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
+                            "https://c.basemaps.cartocdn.com/rastertiles/voyager/" }) {
+                @Override
+                public String getTileURLString(long pMapTileIndex) {
+                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                            MapTileIndex.getX(pMapTileIndex) + "/" +
+                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
+                }
+            });
+        }
+        else {
+            map.setTileSource(new XYTileSource("CartoDark", 0, 20, 512, ".png",
+                    new String[] { "https://a.basemaps.cartocdn.com/dark_all/",
+                            "https://b.basemaps.cartocdn.com/dark_all/",
+                            "https://c.basemaps.cartocdn.com/dark_all/" }) {
+                @Override
+                public String getTileURLString(long pMapTileIndex) {
+                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                            MapTileIndex.getX(pMapTileIndex) + "/" +
+                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
+                }
+            });
+        }
         map.setMultiTouchControls(true);
-        centerMapOnLocation(new GeoPoint(42.8467, -2.6731), 17.0);
+        centerMapOnLocation(new GeoPoint(42.853065, -2.673206), 17.0);
     }
 
     private void centerMapOnLocation(GeoPoint point, double zoomLevel) {
