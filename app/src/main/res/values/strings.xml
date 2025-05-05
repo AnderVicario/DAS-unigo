@@ -9,4 +9,7 @@
     <string name="destination_marker">Destination Marker</string>
     <string name="calculate_route">Calculate Route</string>
     <string name="no_destination_selected">No destination selected.</string>
+    <string name="logo_description">Logo</string>
+    <string name="zoom_in">zoom in</string>
+    <string name="zoom_out">zoom out</string>
 </resources>
