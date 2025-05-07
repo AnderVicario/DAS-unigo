@@ -10,6 +10,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -17,6 +18,7 @@ import android.view.WindowInsets;
 import android.view.WindowMetrics;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -24,6 +26,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.unigo.utils.CustomInfoWindow;
 import com.unigo.utils.RouteCalculator;
@@ -77,6 +80,83 @@ public class MainActivity extends AppCompatActivity {
         fabCalculateRoute = findViewById(R.id.fab_calculate_route);
         fabCalculateRoute.setVisibility(View.GONE);
         fabCalculateRoute.setOnClickListener(v -> calculateRouteToDestination());
+
+        configureBottomSheet();
+    }
+
+
+    private void configureBottomSheet() {
+        LinearLayout bottomSheet = findViewById(R.id.bottom_sheet);
+        LinearLayout zoomControlsContainer = findViewById(R.id.zoom_controls_container);
+        LinearLayout buttonContainer = findViewById(R.id.button_container);
+
+        BottomSheetBehavior<LinearLayout> bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+
+        // Configuración básica
+        int peekHeightPx = dpToPx(50);
+        bottomSheetBehavior.setPeekHeight(peekHeightPx);
+        bottomSheetBehavior.setHideable(false);
+
+        // Distancia constante que deseas mantener entre los botones y el borde superior del BottomSheet
+        final int CONSTANT_DISTANCE = dpToPx(20); // Ajusta este valor según necesites
+
+        // Establecer que el contenido se ajuste completamente
+        bottomSheetBehavior.setFitToContents(true);
+
+        // Iniciar en estado colapsado
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
+        // Guardar el estado
+        bottomSheetBehavior.setSaveFlags(BottomSheetBehavior.SAVE_ALL);
+
+        // Callback para el arrastre y para actualizar posición de botones
+        bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                switch (newState) {
+                    case BottomSheetBehavior.STATE_EXPANDED:
+                        Log.d("BottomSheet", "Completamente expandido");
+                        break;
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        Log.d("BottomSheet", "Colapsado");
+                        break;
+                    case BottomSheetBehavior.STATE_DRAGGING:
+                        Log.d("BottomSheet", "Arrastrando");
+                        break;
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                // La clave está aquí: queremos que los botones mantengan una distancia constante
+                // respecto al borde superior del BottomSheet
+
+                // Obtener la posición actual del borde superior del BottomSheet
+                float bottomSheetTop = bottomSheet.getY();
+
+                // Calcular la posición Y para los contenedores de botones
+                // Siempre estarán a CONSTANT_DISTANCE por encima del borde superior
+                float buttonY = bottomSheetTop - CONSTANT_DISTANCE - zoomControlsContainer.getHeight();
+
+                // Aplicar la posición absoluta en lugar de una translación relativa
+                zoomControlsContainer.setY(buttonY);
+                buttonContainer.setY(buttonY);
+            }
+        });
+
+        // Configurar clic en el handle para alternar estados
+        findViewById(R.id.drag_handle).setOnClickListener(v -> {
+            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            } else {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            }
+        });
+    }
+
+    // Método de utilidad para convertir dp a píxeles
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
     private void requestLocationPermission() {
