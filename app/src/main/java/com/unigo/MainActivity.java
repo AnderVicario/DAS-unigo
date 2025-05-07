@@ -13,6 +13,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowMetrics;
@@ -90,66 +91,54 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout zoomControlsContainer = findViewById(R.id.zoom_controls_container);
         LinearLayout buttonContainer = findViewById(R.id.button_container);
 
-        BottomSheetBehavior<LinearLayout> bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        BottomSheetBehavior<LinearLayout> behavior = BottomSheetBehavior.from(bottomSheet);
 
-        // Configuración básica
         int peekHeightPx = dpToPx(50);
-        bottomSheetBehavior.setPeekHeight(peekHeightPx);
-        bottomSheetBehavior.setHideable(false);
+        behavior.setPeekHeight(peekHeightPx);
+        behavior.setHideable(false);
+        behavior.setFitToContents(true);
+        behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        behavior.setSaveFlags(BottomSheetBehavior.SAVE_ALL);
 
-        // Distancia constante que deseas mantener entre los botones y el borde superior del BottomSheet
-        final int CONSTANT_DISTANCE = dpToPx(20); // Ajusta este valor según necesites
-
-        // Establecer que el contenido se ajuste completamente
-        bottomSheetBehavior.setFitToContents(true);
-
-        // Iniciar en estado colapsado
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
-        // Guardar el estado
-        bottomSheetBehavior.setSaveFlags(BottomSheetBehavior.SAVE_ALL);
-
-        // Callback para el arrastre y para actualizar posición de botones
-        bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+        // Callback para actualizar durante el drag
+        behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
-            public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                switch (newState) {
-                    case BottomSheetBehavior.STATE_EXPANDED:
-                        Log.d("BottomSheet", "Completamente expandido");
-                        break;
-                    case BottomSheetBehavior.STATE_COLLAPSED:
-                        Log.d("BottomSheet", "Colapsado");
-                        break;
-                    case BottomSheetBehavior.STATE_DRAGGING:
-                        Log.d("BottomSheet", "Arrastrando");
-                        break;
-                }
-            }
+            public void onStateChanged(@NonNull View bs, int newState) { /* ... */ }
 
             @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                // La clave está aquí: queremos que los botones mantengan una distancia constante
-                // respecto al borde superior del BottomSheet
-
-                // Obtener la posición actual del borde superior del BottomSheet
-                float bottomSheetTop = bottomSheet.getY();
-
-                // Calcular la posición Y para los contenedores de botones
-                // Siempre estarán a CONSTANT_DISTANCE por encima del borde superior
-                float buttonY = bottomSheetTop - CONSTANT_DISTANCE - zoomControlsContainer.getHeight();
-
-                // Aplicar la posición absoluta en lugar de una translación relativa
-                zoomControlsContainer.setY(buttonY);
-                buttonContainer.setY(buttonY);
+            public void onSlide(@NonNull View bs, float slideOffset) {
+                int height = bs.getHeight();
+                int baseOffset = dpToPx(70);
+                float translationY = -baseOffset - (slideOffset * (height - peekHeightPx));
+                zoomControlsContainer.setTranslationY(translationY);
+                buttonContainer.setTranslationY(translationY);
             }
         });
 
-        // Configurar clic en el handle para alternar estados
+        // Listener para saber cuándo bottomSheet ya tiene tamaño
+        bottomSheet.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        // Una vez medido, aplicamos la posición inicial (slideOffset = 0)
+                        int height = bottomSheet.getHeight();
+                        int baseOffset = dpToPx(70);
+                        float translationY = -baseOffset; // -baseOffset - (0 * ...)
+                        zoomControlsContainer.setTranslationY(translationY);
+                        buttonContainer.setTranslationY(translationY);
+
+                        // Y eliminamos el listener para no repetir
+                        bottomSheet.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                }
+        );
+
+        // Click sobre el handle para alternar estados
         findViewById(R.id.drag_handle).setOnClickListener(v -> {
-            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            if (behavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
             } else {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
         });
     }
