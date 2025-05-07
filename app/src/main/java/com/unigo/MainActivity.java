@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
             SnackbarUtils.showSuccess(findViewById(android.R.id.content), this, getString(R.string.calculating_route));
             routeCalculator.clearExistingRoute();
 
-            routeCalculator.calculateRoute(myLocation, destination, new RouteCalculator.RouteCallback() {
+            routeCalculator.calculateRoute("bike", myLocation, destination, new RouteCalculator.RouteCallback() {
                 @Override
                 public void onRouteCalculated(final double distanceKm, final int durationMinutes) {
                     runOnUiThread(() -> {

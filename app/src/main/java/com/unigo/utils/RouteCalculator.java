@@ -3,6 +3,8 @@ package com.unigo.utils;
 import android.graphics.Color;
 import android.util.Log;
 
+import androidx.core.content.ContextCompat;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.unigo.R;
@@ -14,7 +16,9 @@ import org.osmdroid.views.overlay.Polyline;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -24,7 +28,14 @@ import okhttp3.Response;
 
 public class RouteCalculator {
     private static final String TAG = "RouteCalculator";
-    private static final String OSRM_API_URL = "http://umbra.ddns.net:5000/route/v1/foot/";
+    private static final String HOST = "http://umbra.ddns.net";
+
+    // Mapa de perfiles y puertos
+    private static final Map<String, Integer> PROFILE_PORT_MAP = new HashMap<String, Integer>() {{
+        put("foot", 5000);
+        put("car", 5001);
+        put("bike", 5002);
+    }};
 
     private final MapView mapView;
     private final OkHttpClient client;
@@ -42,10 +53,16 @@ public class RouteCalculator {
         this.gson = new Gson();
     }
 
-    public void calculateRoute(GeoPoint start, GeoPoint end, RouteCallback callback) {
+    public void calculateRoute(String profile, GeoPoint start, GeoPoint end, RouteCallback callback) {
         clearExistingRoute();
 
-        String url = OSRM_API_URL
+        Integer port = PROFILE_PORT_MAP.get(profile);
+        if (port == null) {
+            callback.onRouteError("Perfil no soportado: " + profile);
+            return;
+        }
+
+        String url = HOST + ":" + port + "/route/v1/" + profile + "/"
                 + start.getLongitude() + "," + start.getLatitude() + ";"
                 + end.getLongitude() + "," + end.getLatitude()
                 + "?overview=full&geometries=polyline";
@@ -100,8 +117,8 @@ public class RouteCalculator {
         mapView.post(() -> {
             routePolyline = new Polyline(mapView);
             routePolyline.setPoints(points);
-            routePolyline.setColor(R.color.primary);
-            routePolyline.setWidth(12f);
+            routePolyline.setColor(ContextCompat.getColor(mapView.getContext(), R.color.primary));
+            routePolyline.setWidth(14f);
             mapView.getOverlays().add(routePolyline);
             mapView.invalidate();
         });
