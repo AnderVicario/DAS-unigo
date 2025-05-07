@@ -1,6 +1,7 @@
 package com.unigo.utils;
 
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.util.Log;
 
 import androidx.core.content.ContextCompat;
@@ -118,7 +119,8 @@ public class RouteCalculator {
             routePolyline = new Polyline(mapView);
             routePolyline.setPoints(points);
             routePolyline.setColor(ContextCompat.getColor(mapView.getContext(), R.color.primary));
-            routePolyline.setWidth(14f);
+            routePolyline.setWidth(8f);
+            routePolyline.getPaint().setStrokeCap(Paint.Cap.ROUND);
             mapView.getOverlays().add(routePolyline);
             mapView.invalidate();
         });
