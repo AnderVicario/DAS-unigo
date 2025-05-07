@@ -181,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         map.setMultiTouchControls(true);
-        centerMapOnLocation(new GeoPoint(42.853065, -2.673206), 17.0);
+        centerMapOnLocation(new GeoPoint(42.853065, -2.673206), 17.0); // Gazteiz
     }
 
     private void centerMapOnLocation(GeoPoint point, double zoomLevel) {

@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.unigo.R;
 
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -23,7 +24,7 @@ import okhttp3.Response;
 
 public class RouteCalculator {
     private static final String TAG = "RouteCalculator";
-    private static final String OSRM_API_URL = "https://router.project-osrm.org/route/v1/foot/";
+    private static final String OSRM_API_URL = "http://umbra.ddns.net:5000/route/v1/foot/";
 
     private final MapView mapView;
     private final OkHttpClient client;
@@ -48,6 +49,8 @@ public class RouteCalculator {
                 + start.getLongitude() + "," + start.getLatitude() + ";"
                 + end.getLongitude() + "," + end.getLatitude()
                 + "?overview=full&geometries=polyline";
+
+        Log.d(TAG, "Request URL: " + url);
 
         Request request = new Request.Builder().url(url).build();
 
@@ -74,6 +77,8 @@ public class RouteCalculator {
                         return;
                     }
 
+                    Log.d(TAG, "Response JSON: " + responseData);
+
                     JsonObject route = jsonResponse.getAsJsonArray("routes").get(0).getAsJsonObject();
                     String geometry = route.get("geometry").getAsString();
                     List<GeoPoint> points = decodePolyline(geometry);
@@ -95,8 +100,8 @@ public class RouteCalculator {
         mapView.post(() -> {
             routePolyline = new Polyline(mapView);
             routePolyline.setPoints(points);
-            routePolyline.setColor(Color.BLUE);
-            routePolyline.setWidth(10f);
+            routePolyline.setColor(R.color.primary);
+            routePolyline.setWidth(12f);
             mapView.getOverlays().add(routePolyline);
             mapView.invalidate();
         });
