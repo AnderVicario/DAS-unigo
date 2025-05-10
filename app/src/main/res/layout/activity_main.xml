@@ -6,14 +6,14 @@
     android:id="@+id/main_coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/transparent"
+    android:background="@color/background"
     android:fitsSystemWindows="false">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/transparent"
+        android:background="@color/background"
         android:fitsSystemWindows="false">
 
         <androidx.appcompat.widget.Toolbar
@@ -80,6 +80,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="@drawable/round_button"
+            android:backgroundTint="@color/background"
             android:src="@drawable/ic_zoom_in"
             android:contentDescription="@string/zoom_in"
             app:tint="@color/onSurface" />
@@ -90,6 +91,7 @@
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
             android:background="@drawable/round_button"
+            android:backgroundTint="@color/background"
             android:src="@drawable/ic_zoom_out"
             android:contentDescription="@string/zoom_out"
             app:tint="@color/onSurface" />
@@ -124,7 +126,7 @@
         android:id="@+id/bottom_sheet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/surface"
+        android:background="@color/background"
         android:orientation="vertical"
         android:minHeight="500dp"
         app:behavior_hideable="false"
@@ -134,16 +136,26 @@
         <View
             android:id="@+id/drag_handle"
             android:layout_width="60dp"
-            android:layout_height="5dp"
+            android:layout_height="20dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="8dp"
-            android:background="@drawable/drag_handle" />
+            android:backgroundTint="@color/onBackground"
+            android:background="@drawable/ic_zoom_out" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
-            android:text="Opciones de Ruta" />
+            android:text="Opciones de Ruta"
+            android:textColor="@color/onBackground"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/route_options"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"
+            android:overScrollMode="never"
+            android:padding="8dp" />
 
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

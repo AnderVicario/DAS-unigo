@@ -1,22 +1,16 @@
-package com.unigo;
+package com.unigo.ui;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Insets;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
-import android.view.WindowInsets;
-import android.view.WindowMetrics;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -26,9 +20,17 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.unigo.R;
+import com.unigo.adapters.TransportAdapter;
+import com.unigo.models.Transport;
 import com.unigo.utils.CustomInfoWindow;
 import com.unigo.utils.RouteCalculator;
 import com.unigo.utils.SnackbarUtils;
@@ -45,9 +47,11 @@ import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-public class MainActivity extends AppCompatActivity {
+public class MapActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 1;
 
@@ -83,6 +87,19 @@ public class MainActivity extends AppCompatActivity {
         fabCalculateRoute.setOnClickListener(v -> calculateRouteToDestination());
 
         configureBottomSheet();
+        configureRecyclerView();
+    }
+
+    private void configureRecyclerView() {
+        RecyclerView recyclerView = findViewById(R.id.route_options);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        List<Transport> transportOptions = new ArrayList<>();
+        transportOptions.add(new Transport("Tranvía", "10 min", "1.2 km"));
+        transportOptions.add(new Transport("Autobús", "8 min", "1.1 km"));
+
+        TransportAdapter adapter = new TransportAdapter(this, transportOptions);
+        recyclerView.setAdapter(adapter);
     }
 
 
@@ -199,14 +216,14 @@ public class MainActivity extends AppCompatActivity {
                         String message = String.format("Distancia: %s\nTiempo estimado: %s",
                                 RouteCalculator.formatDistance(distanceKm),
                                 RouteCalculator.formatDuration(durationMinutes));
-                        SnackbarUtils.showSuccess(findViewById(android.R.id.content), MainActivity.this,
+                        SnackbarUtils.showSuccess(findViewById(android.R.id.content), MapActivity.this,
                                 getString(R.string.route_calculated) + "\n" + message);
                     });
                 }
 
                 @Override
                 public void onRouteError(final String message) {
-                    runOnUiThread(() -> SnackbarUtils.showError(findViewById(android.R.id.content), MainActivity.this, message));
+                    runOnUiThread(() -> SnackbarUtils.showError(findViewById(android.R.id.content), MapActivity.this, message));
                 }
             });
         } else {
@@ -335,24 +352,15 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         View view = findViewById(R.id.main);
         Window window = getWindow();
-        window.setStatusBarColor(getResources().getColor(R.color.background));
+        window.setStatusBarColor(getResources().getColor(R.color.background, getTheme()));
+        WindowCompat.setDecorFitsSystemWindows(window, false);
 
-        int densityDpi = getResources().getConfiguration().densityDpi;
-        WindowMetrics windowMetrics = getWindowManager().getCurrentWindowMetrics();
-        Insets insets = windowMetrics.getWindowInsets().getInsetsIgnoringVisibility(WindowInsets.Type.statusBars());
-
-        int statusBarHeight;
-        switch (densityDpi) {
-            case DisplayMetrics.DENSITY_HIGH: statusBarHeight = 38; break;
-            case DisplayMetrics.DENSITY_MEDIUM: statusBarHeight = 25; break;
-            case DisplayMetrics.DENSITY_LOW: statusBarHeight = 19; break;
-            default: statusBarHeight = 25;
-        }
-
-        int topMarginInPx = (int) (statusBarHeight * getResources().getDisplayMetrics().density + 0.5f);
-        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-        layoutParams.topMargin = topMarginInPx;
-        view.setLayoutParams(layoutParams);
+        // padding top para evitar que el contenido esté debajo del status bar
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            int topInset = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            v.setPadding(0, topInset, 0, 0);
+            return insets;
+        });
     }
 
     @Override

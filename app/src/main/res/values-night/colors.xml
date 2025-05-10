@@ -8,7 +8,7 @@
 
     <!-- Colores de fondo -->
     <color name="background">#000000</color>
-    <color name="surface">#121212</color>
+    <color name="surface">#1e1e1e</color>
 
     <!-- Colores funcionales -->
     <color name="location">#1f6feb</color>
