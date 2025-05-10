@@ -8,7 +8,10 @@
 
     <!-- Colores de fondo -->
     <color name="background">#000000</color>
+    <color name="background_10">#1AFFFFFF</color>
     <color name="surface">#1e1e1e</color>
+    <color name="surface_50">#801E1E1E</color>
+    <color name="surface_80">#CC1E1E1E</color>
 
     <!-- Colores funcionales -->
     <color name="location">#1f6feb</color>

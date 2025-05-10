@@ -80,10 +80,10 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="@drawable/round_button"
-            android:backgroundTint="@color/surface"
             android:src="@drawable/ic_zoom_in"
             android:contentDescription="@string/zoom_in"
-            app:tint="@color/onSurface" />
+            app:tint="@color/onSurface"
+            android:alpha="1"/>
 
         <ImageButton
             android:id="@+id/btnZoomOut"
@@ -91,10 +91,10 @@
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
             android:background="@drawable/round_button"
-            android:backgroundTint="@color/surface"
             android:src="@drawable/ic_zoom_out"
             android:contentDescription="@string/zoom_out"
-            app:tint="@color/onSurface" />
+            app:tint="@color/onSurface"
+            android:alpha="1"/>
 
     </LinearLayout>
 
@@ -126,7 +126,7 @@
         android:id="@+id/bottom_sheet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/background"
+        android:background="@drawable/bottom_sheet_background"
         android:orientation="vertical"
         android:minHeight="500dp"
         app:behavior_hideable="false"
