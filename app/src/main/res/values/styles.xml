@@ -23,4 +23,7 @@
     <style name="RoundedDialog" parent="">
         <item name="android:background">@color/surface</item>
     </style>
+    <style name="RoundedButton" parent="Widget.MaterialComponents.ExtendedFloatingActionButton">
+        <item name="cornerRadius">16dp</item> <!-- Cambia el valor según lo necesites -->
+    </style>
 </resources>

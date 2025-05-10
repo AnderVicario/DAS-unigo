@@ -80,7 +80,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="@drawable/round_button"
-            android:backgroundTint="@color/background"
+            android:backgroundTint="@color/surface"
             android:src="@drawable/ic_zoom_in"
             android:contentDescription="@string/zoom_in"
             app:tint="@color/onSurface" />
@@ -91,7 +91,7 @@
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
             android:background="@drawable/round_button"
-            android:backgroundTint="@color/background"
+            android:backgroundTint="@color/surface"
             android:src="@drawable/ic_zoom_out"
             android:contentDescription="@string/zoom_out"
             app:tint="@color/onSurface" />
@@ -115,7 +115,7 @@
             android:elevation="0dp"
             app:elevation="0dp"
             app:borderWidth="0dp"
-            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+            style="@style/RoundedButton"
             android:backgroundTint="@color/primary"
             app:iconTint="@color/onPrimary"
             app:icon="@drawable/ic_directions_walk" />
