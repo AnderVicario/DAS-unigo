@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
@@ -30,7 +31,9 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.unigo.R;
 import com.unigo.adapters.TransportAdapter;
+import com.unigo.models.NearStopResponse;
 import com.unigo.models.Transport;
+import com.unigo.utils.BusRoutesAPI;
 import com.unigo.utils.CustomInfoWindow;
 import com.unigo.utils.RouteCalculator;
 import com.unigo.utils.SnackbarUtils;
@@ -47,6 +50,7 @@ import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -54,6 +58,7 @@ import java.util.Objects;
 public class MapActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 1;
+    private static final String TAG = "MapActivity";
 
     private MapView map;
     private Marker currentMarker;
@@ -195,6 +200,20 @@ public class MapActivity extends AppCompatActivity {
             if (myLocationOverlay.getMyLocation() != null) {
                 map.getController().setCenter(myLocationOverlay.getMyLocation());
                 map.getController().setZoom(17.0);
+
+                // Se ejecuta en un hilo porque las operaciones de red no pueden ir en el hilo principal
+                BusRoutesAPI api = new BusRoutesAPI();
+                new Thread(() -> {
+                    try {
+                        NearStopResponse res = api.findNearStop(myLocationOverlay.getMyLocation().getLatitude(), myLocationOverlay.getMyLocation().getLongitude(), 300);
+                        Log.i(TAG, "Parada: " + res.stop_name);
+                        Log.i(TAG, "Distancia: " + res.distance_m + "m");
+                        Log.i(TAG, "Rutas: " + String.join(", ", res.routes));
+                        Log.i(TAG, "¿Universidad?: " + res.is_university_route);
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error al consultar la API", e);
+                    }
+                }).start();
             }
         }));
 
