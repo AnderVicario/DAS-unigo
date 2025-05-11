@@ -1,6 +1,5 @@
 package com.unigo.utils;
 
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.Log;
 
