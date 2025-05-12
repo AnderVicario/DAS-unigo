@@ -64,6 +64,51 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/border_secondary" />
 
+        <HorizontalScrollView
+            android:id="@+id/buttons_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/border_secondary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="4dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/toggle_bus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="Paradas de autobús"
+                    android:textSize="12sp"
+                    android:background="@drawable/round_button"
+                    app:backgroundTint="@null"
+                    android:padding="4dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"/>
+
+                <Space
+                    android:layout_width="8dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/toggle_bike"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="Parkings de bicicletas"
+                    android:textSize="12sp"
+                    android:background="@drawable/round_button"
+                    app:backgroundTint="@null"
+                    android:padding="4dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"/>
+
+            </LinearLayout>
+        </HorizontalScrollView>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
@@ -94,8 +139,7 @@
             android:background="@drawable/round_button"
             android:src="@drawable/ic_zoom_in"
             android:contentDescription="@string/zoom_in"
-            app:tint="@color/onSurface"
-            android:alpha="1"/>
+            app:tint="@color/onSurface"/>
 
         <ImageButton
             android:id="@+id/btnZoomOut"
@@ -105,8 +149,7 @@
             android:background="@drawable/round_button"
             android:src="@drawable/ic_zoom_out"
             android:contentDescription="@string/zoom_out"
-            app:tint="@color/onSurface"
-            android:alpha="1"/>
+            app:tint="@color/onSurface"/>
 
     </LinearLayout>
 

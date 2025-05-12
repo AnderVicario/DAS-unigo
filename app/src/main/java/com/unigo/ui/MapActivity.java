@@ -7,7 +7,6 @@ import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
@@ -34,6 +33,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.unigo.R;
 import com.unigo.adapters.TransportAdapter;
@@ -89,10 +89,12 @@ public class MapActivity extends AppCompatActivity {
     private final double DETAIL_ZOOM_THRESHOLD = 16.5;
     private boolean isAnimatingToMyLocation = false;
 
+    private boolean showBusStops = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.map_activity);
         setupWindow();
 
         ImageView ivLogo = findViewById(R.id.iv_logo);
@@ -131,6 +133,25 @@ public class MapActivity extends AppCompatActivity {
         configureBottomSheet();
         configureRecyclerView();
         calculateAllRoutes(FIXED_DESTINATION);
+
+        MaterialButton toggleBusButton = findViewById(R.id.toggle_bus);
+        toggleBusButton.setOnClickListener(v -> {
+            showBusStops = !showBusStops; // Invertir estado
+            updateToggleButtonAppearance(); // Actualizar apariencia
+            refreshMapOverlays(); // Actualizar overlays del mapa
+            if (showBusStops) {
+                updateVisualizationMode(map.getZoomLevelDouble()); // Verificar zoom actual
+            }
+        });
+    }
+
+    private void updateToggleButtonAppearance() {
+        MaterialButton toggleBusButton = findViewById(R.id.toggle_bus);
+        int backgroundRes = showBusStops ? R.drawable.round_button : R.drawable.round_button;
+        int textColor = ContextCompat.getColor(this, showBusStops ? R.color.primary : R.color.onBackground);
+
+        toggleBusButton.setBackgroundResource(backgroundRes);
+        toggleBusButton.setTextColor(textColor);
     }
 
     private void configureRecyclerView() {
@@ -264,7 +285,9 @@ public class MapActivity extends AppCompatActivity {
 
     private void loadBusStops() {
         if (!cachedBusStops.isEmpty()) {
-            updateVisualizationMode(map.getZoomLevelDouble());
+            if (showBusStops) {
+                updateVisualizationMode(map.getZoomLevelDouble());
+            }
             return;
         }
 
@@ -616,8 +639,9 @@ public class MapActivity extends AppCompatActivity {
     }
 
     private void updateVisualizationMode(double currentZoom) {
-        boolean shouldBeDetailed = currentZoom >= DETAIL_ZOOM_THRESHOLD;
+        if (!showBusStops) return; // No hacer nada si están desactivadas
 
+        boolean shouldBeDetailed = currentZoom >= DETAIL_ZOOM_THRESHOLD;
         if (shouldBeDetailed != inDetailedMode) {
             inDetailedMode = shouldBeDetailed;
             refreshMapOverlays();
@@ -626,24 +650,43 @@ public class MapActivity extends AppCompatActivity {
 
     private void refreshMapOverlays() {
         map.getOverlays().removeIf(overlay -> {
-            if (overlay instanceof BusStopsOverlay) {
-                return inDetailedMode;
+            // Si las paradas están desactivadas, eliminar TODOS los elementos relacionados
+            if (!showBusStops) {
+                return overlay instanceof BusStopsOverlay || isBusStopMarker(overlay);
             }
-            return overlay instanceof Marker &&
-                    ((Marker) overlay).getTitle() != null &&
-                    !((Marker) overlay).equals(currentMarker);
+            // Si están activadas, aplicar lógica normal de detalle
+            else {
+                if (overlay instanceof BusStopsOverlay) {
+                    return inDetailedMode; // Eliminar puntos simples si estamos en modo detallado
+                }
+                if (overlay instanceof Marker) {
+                    return isBusStopMarker(overlay); // Eliminar marcadores detallados si no es necesario
+                }
+                return false;
+            }
         });
 
-        if (inDetailedMode) {
-            addDetailedMarkers();
-        } else if (busStopsOverlay != null) {
-            map.getOverlays().add(busStopsOverlay);
+        // Solo agregar overlays si están activados
+        if (showBusStops) {
+            if (inDetailedMode) {
+                addDetailedMarkers();
+            } else if (busStopsOverlay != null) {
+                map.getOverlays().add(busStopsOverlay);
+            }
         }
 
         map.invalidate();
     }
 
+    private boolean isBusStopMarker(Overlay overlay) {
+        if (!(overlay instanceof Marker)) return false;
+        Marker marker = (Marker) overlay;
+        return marker.getTitle() != null && !marker.getTitle().equals(getString(R.string.selected_marker));
+    }
+
     private void addDetailedMarkers() {
+        if (!showBusStops) return; // No agregar si están desactivadas
+
         final int BATCH_SIZE = 5;
         final Handler handler = new Handler();
         final AtomicInteger counter = new AtomicInteger(0);
@@ -651,7 +694,7 @@ public class MapActivity extends AppCompatActivity {
         Runnable markerAdder = new Runnable() {
             @Override
             public void run() {
-                if (!inDetailedMode) return; // Cancelar si cambió el modo
+                if (!inDetailedMode || !showBusStops) return; // Cancelar si cambió el modo
 
                 int start = counter.get();
                 int end = Math.min(start + BATCH_SIZE, cachedBusStops.size());
