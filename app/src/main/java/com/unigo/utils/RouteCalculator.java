@@ -31,7 +31,7 @@ public class RouteCalculator {
     private static final String HOST = "http://umbra.ddns.net";
 
     // Mapa de perfiles y puertos
-    private static final Map<String, Integer> PROFILE_PORT_MAP = new HashMap<String, Integer>() {{
+    public static final Map<String, Integer> PROFILE_PORT_MAP = new HashMap<String, Integer>() {{
         put("foot", 5000);
         put("car", 5001);
         put("bike", 5002);
@@ -43,7 +43,7 @@ public class RouteCalculator {
     private Polyline routePolyline;
 
     public interface RouteCallback {
-        void onRouteCalculated(double distanceKm, int durationMinutes);
+        void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points);
         void onRouteError(String message);
     }
 
@@ -102,8 +102,7 @@ public class RouteCalculator {
                     double distanceInKm = route.get("distance").getAsDouble() / 1000;
                     int durationInMinutes = (int) (route.get("duration").getAsDouble() / 60);
 
-                    drawRoute(points);
-                    callback.onRouteCalculated(distanceInKm, durationInMinutes);
+                    callback.onRouteCalculated(distanceInKm, durationInMinutes, points);
 
                 } catch (Exception e) {
                     Log.e(TAG, "Error al procesar la respuesta", e);
@@ -113,7 +112,7 @@ public class RouteCalculator {
         });
     }
 
-    private void drawRoute(List<GeoPoint> points) {
+    public void drawRoute(List<GeoPoint> points) {
         mapView.post(() -> {
             routePolyline = new Polyline(mapView);
             routePolyline.setPoints(points);

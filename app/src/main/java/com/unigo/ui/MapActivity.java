@@ -1,5 +1,7 @@
 package com.unigo.ui;
 
+import static com.unigo.utils.RouteCalculator.PROFILE_PORT_MAP;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
@@ -59,12 +61,16 @@ public class MapActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 1;
     private static final String TAG = "MapActivity";
+    private final GeoPoint FIXED_DESTINATION = new GeoPoint(42.83953288884712, -2.6703476886917477);
 
     private MapView map;
     private Marker currentMarker;
     private MyLocationNewOverlay myLocationOverlay;
     private RouteCalculator routeCalculator;
     private ExtendedFloatingActionButton fabCalculateRoute;
+
+    private List<Transport> transportOptions = new ArrayList<>();
+    private TransportAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,22 +95,66 @@ public class MapActivity extends AppCompatActivity {
         routeCalculator = new RouteCalculator(map);
         fabCalculateRoute = findViewById(R.id.fab_calculate_route);
         fabCalculateRoute.setVisibility(View.GONE);
-        fabCalculateRoute.setOnClickListener(v -> calculateRouteToDestination());
+        /*fabCalculateRoute.setOnClickListener(v -> calculateRouteToDestination());*/
 
         configureBottomSheet();
         configureRecyclerView();
+        calculateAllRoutes(FIXED_DESTINATION);
     }
 
     private void configureRecyclerView() {
         RecyclerView recyclerView = findViewById(R.id.route_options);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        List<Transport> transportOptions = new ArrayList<>();
-        transportOptions.add(new Transport("Tranvía", "10 min", "1.2 km"));
-        transportOptions.add(new Transport("Autobús", "8 min", "1.1 km"));
-
-        TransportAdapter adapter = new TransportAdapter(this, transportOptions);
+        adapter = new TransportAdapter(this, transportOptions);
         recyclerView.setAdapter(adapter);
+
+        adapter.setOnTransportClickListener(transport -> {
+            routeCalculator.clearExistingRoute();
+            routeCalculator.drawRoute(transport.getRoutePoints());
+            SnackbarUtils.showSuccess(
+                    findViewById(android.R.id.content),
+                    this,
+                    "Ruta: " + transport.getMode() + "\n" +
+                            transport.getFormattedDistance() + " - " +
+                            transport.getFormattedDuration()
+            );
+        });
+    }
+
+    private void calculateAllRoutes(GeoPoint destination) {
+        if (myLocationOverlay == null || myLocationOverlay.getMyLocation() == null) return;
+
+        transportOptions.clear();
+        GeoPoint start = myLocationOverlay.getMyLocation();
+
+        for (String profile : PROFILE_PORT_MAP.keySet()) {
+            routeCalculator.calculateRoute(profile, start, destination, new RouteCalculator.RouteCallback() {
+                @Override
+                public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
+                    String modeName = "";
+                    switch(profile) {
+                        case "foot": modeName = "A pie"; break;
+                        case "car": modeName = "Autobús"; break;
+                        case "bike": modeName = "Bicicleta"; break;
+                    }
+
+                    transportOptions.add(new Transport(
+                            modeName,
+                            distanceKm,
+                            durationMinutes,
+                            points
+                    ));
+
+                    runOnUiThread(() -> adapter.notifyDataSetChanged());
+                }
+
+                @Override
+                public void onRouteError(String message) {
+                    Log.e(TAG, "Error en perfil " + profile + ": " + message);
+                }
+            });
+        }
     }
 
 
@@ -201,6 +251,9 @@ public class MapActivity extends AppCompatActivity {
                 map.getController().setCenter(myLocationOverlay.getMyLocation());
                 map.getController().setZoom(17.0);
 
+                // Recalcular rutas cuando se obtiene la ubicación
+                calculateAllRoutes(FIXED_DESTINATION);
+
                 // Se ejecuta en un hilo porque las operaciones de red no pueden ir en el hilo principal
                 BusRoutesAPI api = new BusRoutesAPI();
                 new Thread(() -> {
@@ -218,39 +271,6 @@ public class MapActivity extends AppCompatActivity {
         }));
 
         map.getOverlays().add(myLocationOverlay);
-    }
-
-    private void calculateRouteToDestination() {
-        if (myLocationOverlay != null && myLocationOverlay.getMyLocation() != null && currentMarker != null) {
-            GeoPoint myLocation = myLocationOverlay.getMyLocation();
-            GeoPoint destination = currentMarker.getPosition();
-
-            SnackbarUtils.showSuccess(findViewById(android.R.id.content), this, getString(R.string.calculating_route));
-            routeCalculator.clearExistingRoute();
-
-            routeCalculator.calculateRoute("foot", myLocation, destination, new RouteCalculator.RouteCallback() {
-                @Override
-                public void onRouteCalculated(final double distanceKm, final int durationMinutes) {
-                    runOnUiThread(() -> {
-                        String message = String.format("Distancia: %s\nTiempo estimado: %s",
-                                RouteCalculator.formatDistance(distanceKm),
-                                RouteCalculator.formatDuration(durationMinutes));
-                        SnackbarUtils.showSuccess(findViewById(android.R.id.content), MapActivity.this,
-                                getString(R.string.route_calculated) + "\n" + message);
-                    });
-                }
-
-                @Override
-                public void onRouteError(final String message) {
-                    runOnUiThread(() -> SnackbarUtils.showError(findViewById(android.R.id.content), MapActivity.this, message));
-                }
-            });
-        } else {
-            SnackbarUtils.showError(findViewById(android.R.id.content), this,
-                    myLocationOverlay == null || myLocationOverlay.getMyLocation() == null ?
-                            getString(R.string.location_not_available) :
-                            getString(R.string.no_destination_selected));
-        }
     }
 
     private void initializeMap(String mode) {
@@ -322,7 +342,7 @@ public class MapActivity extends AppCompatActivity {
     }
 
     private void handleMapTap(GeoPoint position) {
-        routeCalculator.clearExistingRoute();
+        /*routeCalculator.clearExistingRoute();*/
         addNewMarker(position);
     }
 
@@ -342,7 +362,7 @@ public class MapActivity extends AppCompatActivity {
         map.getOverlays().add(currentMarker);
         map.invalidate();
 
-        fabCalculateRoute.setVisibility(View.VISIBLE);
+        /*fabCalculateRoute.setVisibility(View.VISIBLE);*/
     }
 
     private void removeExistingMarker() {

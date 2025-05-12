@@ -1,37 +1,36 @@
 package com.unigo.models;
 
+import com.unigo.utils.RouteCalculator;
+
+import org.osmdroid.util.GeoPoint;
+
+import java.util.List;
+
 public class Transport {
     private String mode;
-    private String duration;
-    private String distance;
+    private int duration;
+    private double distance;
+    private List<GeoPoint> routePoints;
 
-    public Transport(String mode, String duration, String distance) {
+    public Transport(String mode, double distance, int duration, List<GeoPoint> routePoints) {
         this.mode = mode;
-        this.duration = duration;
         this.distance = distance;
+        this.duration = duration;
+        this.routePoints = routePoints;
     }
 
     public String getMode() {
         return mode;
     }
 
-    public void setMode(String mode) {
-        this.mode = mode;
+    public String getFormattedDistance() {
+        return RouteCalculator.formatDistance(this.distance);
     }
 
-    public String getDuration() {
-        return duration;
+    public String getFormattedDuration() {
+        return RouteCalculator.formatDuration(this.duration);
     }
 
-    public void setDuration(String duration) {
-        this.duration = duration;
-    }
+    public List<GeoPoint> getRoutePoints() { return routePoints; }
 
-    public String getDistance() {
-        return distance;
-    }
-
-    public void setDistance(String distance) {
-        this.distance = distance;
-    }
 }
