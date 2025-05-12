@@ -7,9 +7,13 @@ import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -33,6 +37,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.unigo.R;
 import com.unigo.adapters.TransportAdapter;
+import com.unigo.models.GeoJsonStop;
 import com.unigo.models.NearStopResponse;
 import com.unigo.models.Transport;
 import com.unigo.utils.BusRoutesAPI;
@@ -42,13 +47,18 @@ import com.unigo.utils.SnackbarUtils;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
+import org.osmdroid.events.MapListener;
+import org.osmdroid.events.ScrollEvent;
+import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.util.MapTileIndex;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.Projection;
 import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
@@ -56,6 +66,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MapActivity extends AppCompatActivity {
 
@@ -71,6 +82,11 @@ public class MapActivity extends AppCompatActivity {
 
     private List<Transport> transportOptions = new ArrayList<>();
     private TransportAdapter adapter;
+    private List<GeoPoint> allBusStops = new ArrayList<>();
+    private List<GeoJsonStop.Feature> cachedBusStops = new ArrayList<>();
+    private BusStopsOverlay busStopsOverlay;
+    private boolean inDetailedMode = false;
+    private final double DETAIL_ZOOM_THRESHOLD = 16.5;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,10 +103,24 @@ public class MapActivity extends AppCompatActivity {
             initializeMap("light");
             ivLogo.setImageResource(R.drawable.logo_light);
         }
+        loadBusStops();
 
         configureZoomControls();
         setupMapEvents();
         requestLocationPermission();
+
+        map.addMapListener(new MapListener() {
+            @Override
+            public boolean onScroll(ScrollEvent event) {
+                return false;
+            }
+
+            @Override
+            public boolean onZoom(ZoomEvent event) {
+                updateVisualizationMode(event.getZoomLevel());
+                return true;
+            }
+        });
 
         routeCalculator = new RouteCalculator(map);
         fabCalculateRoute = findViewById(R.id.fab_calculate_route);
@@ -231,6 +261,80 @@ public class MapActivity extends AppCompatActivity {
         }
     }
 
+    private void loadBusStops() {
+        if (!cachedBusStops.isEmpty()) {
+            updateVisualizationMode(map.getZoomLevelDouble());
+            return;
+        }
+
+        new Thread(() -> {
+            BusRoutesAPI api = new BusRoutesAPI();
+            try {
+                GeoJsonStop stops = api.getAllStops();
+                if (stops != null && stops.features != null) {
+                    cachedBusStops = stops.features;
+
+                    List<GeoPoint> points = new ArrayList<>(stops.features.size());
+                    for (GeoJsonStop.Feature feature : stops.features) {
+                        if (feature.geometry != null &&
+                                feature.geometry.coordinates != null &&
+                                feature.geometry.coordinates.size() >= 2) {
+
+                            List<Double> coords = feature.geometry.coordinates;
+                            points.add(new GeoPoint(coords.get(1), coords.get(0)));
+                        }
+                    }
+
+                    runOnUiThread(() -> {
+                        busStopsOverlay = new BusStopsOverlay(points);
+                        updateVisualizationMode(map.getZoomLevelDouble());
+                    });
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Error cargando paradas", e);
+            }
+        }).start();
+    }
+
+    private void addBusStopMarker(GeoJsonStop.Feature feature) {
+        if (feature.geometry == null ||
+                feature.geometry.coordinates == null ||
+                feature.geometry.coordinates.size() < 2) {
+            return;
+        }
+
+        List<Double> coordinates = feature.geometry.coordinates;
+        double lon = coordinates.get(0);
+        double lat = coordinates.get(1);
+        GeoPoint point = new GeoPoint(lat, lon);
+
+        Marker marker = new Marker(map);
+        marker.setPosition(point);
+        marker.setIcon(ContextCompat.getDrawable(this, R.drawable.bus_stop_marker));
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+
+        // Manejo seguro de nulos
+        String stopName = "Parada desconocida";
+        String routesInfo = "No hay información de rutas";
+
+        if (feature.properties != null) {
+            stopName = (feature.properties.name != null) ?
+                    feature.properties.name : stopName;
+
+            if (feature.properties.routes != null && !feature.properties.routes.isEmpty()) {
+                routesInfo = String.join(", ", feature.properties.routes);
+            }
+        }
+
+        marker.setTitle(stopName);
+        marker.setSnippet("Rutas: " + routesInfo);
+
+        CustomInfoWindow infoWindow = new CustomInfoWindow(map);
+        marker.setInfoWindow(infoWindow);
+
+        map.getOverlays().add(marker);
+    }
+
     private void setupLocationOverlay() {
         myLocationOverlay = new MyLocationNewOverlay(
                 new GpsMyLocationProvider(getApplicationContext()),
@@ -306,7 +410,7 @@ public class MapActivity extends AppCompatActivity {
         }
 
         map.setMultiTouchControls(true);
-        centerMapOnLocation(new GeoPoint(42.853065, -2.673206), 17.0); // Gazteiz
+        centerMapOnLocation(FIXED_DESTINATION, 17.0); // Gazteiz
     }
 
     private void centerMapOnLocation(GeoPoint point, double zoomLevel) {
@@ -437,5 +541,93 @@ public class MapActivity extends AppCompatActivity {
     private void showCoordinatesToast(GeoPoint position) {
         SnackbarUtils.showSuccess(findViewById(android.R.id.content), this,
                 getString(R.string.selected_marker) + createMarkerTitle(position));
+    }
+
+    private class BusStopsOverlay extends Overlay {
+        private final List<GeoPoint> stops;
+        private final Bitmap pointBitmap;
+        private final Paint paint;
+        private final Point reusePoint = new Point(); // Para reutilizar memoria
+
+        public BusStopsOverlay(List<GeoPoint> stops) {
+            this.stops = stops; // Almacenar las paradas
+
+            // Configurar bitmap y paint una sola vez
+            pointBitmap = Bitmap.createBitmap(6, 6, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(pointBitmap);
+            paint = new Paint();
+            paint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.secondaryVariant));
+            paint.setAntiAlias(true);
+            canvas.drawCircle(3, 3, 3, paint);
+        }
+
+        @Override
+        public void draw(Canvas canvas, MapView mapView, boolean shadow) {
+            if (shadow || stops == null || stops.isEmpty()) return;
+
+            Projection projection = mapView.getProjection();
+            for (GeoPoint stop : stops) {
+                projection.toPixels(stop, reusePoint);
+                canvas.drawBitmap(pointBitmap, reusePoint.x - 3, reusePoint.y - 3, paint);
+            }
+        }
+    }
+
+    private void updateVisualizationMode(double currentZoom) {
+        boolean shouldBeDetailed = currentZoom >= DETAIL_ZOOM_THRESHOLD;
+
+        if (shouldBeDetailed != inDetailedMode) {
+            inDetailedMode = shouldBeDetailed;
+            refreshMapOverlays();
+        }
+    }
+
+    private void refreshMapOverlays() {
+        map.getOverlays().removeIf(overlay -> {
+            if (overlay instanceof BusStopsOverlay) {
+                return inDetailedMode;
+            }
+            return overlay instanceof Marker &&
+                    ((Marker) overlay).getTitle() != null &&
+                    !((Marker) overlay).equals(currentMarker);
+        });
+
+        if (inDetailedMode) {
+            addDetailedMarkers();
+        } else if (busStopsOverlay != null) {
+            map.getOverlays().add(busStopsOverlay);
+        }
+
+        map.invalidate();
+    }
+
+    private void addDetailedMarkers() {
+        final int BATCH_SIZE = 5;
+        final Handler handler = new Handler();
+        final AtomicInteger counter = new AtomicInteger(0);
+
+        Runnable markerAdder = new Runnable() {
+            @Override
+            public void run() {
+                if (!inDetailedMode) return; // Cancelar si cambió el modo
+
+                int start = counter.get();
+                int end = Math.min(start + BATCH_SIZE, cachedBusStops.size());
+
+                for (int i = start; i < end; i++) {
+                    GeoJsonStop.Feature feature = cachedBusStops.get(i);
+                    if (feature != null) {
+                        addBusStopMarker(feature);
+                    }
+                }
+
+                counter.set(end);
+                if (end < cachedBusStops.size()) {
+                    handler.postDelayed(this, 30);
+                }
+            }
+        };
+
+        handler.post(markerAdder);
     }
 }

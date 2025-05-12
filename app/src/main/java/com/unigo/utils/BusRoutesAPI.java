@@ -1,6 +1,7 @@
 package com.unigo.utils;
 
 import com.google.gson.Gson;
+import com.unigo.models.GeoJsonStop;
 import com.unigo.models.NearStopResponse;
 
 import okhttp3.OkHttpClient;
@@ -21,13 +22,14 @@ public class BusRoutesAPI {
         this.gson = new Gson();
     }
 
-    public String getGeoJsonStops() throws IOException {
+    public GeoJsonStop getAllStops() throws IOException {
         Request request = new Request.Builder()
                 .url(BASE_URL + "/stops/geojson")
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            return response.body().string();
+            String json = response.body().string();
+            return gson.fromJson(json, GeoJsonStop.class);
         }
     }
 
