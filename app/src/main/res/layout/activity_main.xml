@@ -75,10 +75,22 @@
         android:fitsSystemWindows="true"
         android:orientation="vertical">
 
+        <!-- Botón para centrar ubicación -->
+        <ImageButton
+            android:id="@+id/btnMyLocation"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/round_button"
+            android:src="@drawable/crosshairs_gps"
+            android:contentDescription="@string/center"
+            app:tint="@color/onSurface"/>
+
         <ImageButton
             android:id="@+id/btnZoomIn"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/round_button"
             android:src="@drawable/ic_zoom_in"
             android:contentDescription="@string/zoom_in"

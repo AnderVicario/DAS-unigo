@@ -87,6 +87,7 @@ public class MapActivity extends AppCompatActivity {
     private BusStopsOverlay busStopsOverlay;
     private boolean inDetailedMode = false;
     private final double DETAIL_ZOOM_THRESHOLD = 16.5;
+    private boolean isAnimatingToMyLocation = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,7 +106,7 @@ public class MapActivity extends AppCompatActivity {
         }
         loadBusStops();
 
-        configureZoomControls();
+        configureControls();
         setupMapEvents();
         requestLocationPermission();
 
@@ -418,14 +419,55 @@ public class MapActivity extends AppCompatActivity {
         map.getController().setCenter(point);
     }
 
-    private void configureZoomControls() {
+    private void configureControls() {
         map.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
 
         ImageButton btnZoomIn = findViewById(R.id.btnZoomIn);
         ImageButton btnZoomOut = findViewById(R.id.btnZoomOut);
+        ImageButton btnMyLocation = findViewById(R.id.btnMyLocation);
 
         btnZoomIn.setOnClickListener(v -> map.getController().zoomIn());
         btnZoomOut.setOnClickListener(v -> map.getController().zoomOut());
+        btnMyLocation.setOnClickListener(v -> {
+            // Evitar múltiples clics rápidos
+            if (isAnimatingToMyLocation) {
+                return;
+            }
+
+            GeoPoint myLoc = (myLocationOverlay != null) ? myLocationOverlay.getMyLocation() : null;
+            if (myLoc != null) {
+                isAnimatingToMyLocation = true;
+
+                double targetZoom = 17.0;
+                double targetZoomOut = 11.0;
+                double currentZoom = map.getZoomLevelDouble();
+
+                // Verificar si es necesario hacer zoom out primero
+                if (currentZoom > targetZoom) {
+                    // Zoom out
+                    map.getController().animateTo(map.getMapCenter(), targetZoomOut, 600L);
+
+                    // Luego centrar la cámara en la ubicación deseada con el zoom final
+                    new Handler().postDelayed(() -> {
+                        map.getController().animateTo(myLoc, targetZoom, 1200L);
+                        isAnimatingToMyLocation = false;
+                    }, 600);  // Tiempo de espera para que se haga el zoom out y empiece la animación de movimiento
+                } else {
+                    // Si no es necesario el zoom out, centramos directamente
+                    map.getController().animateTo(myLoc, targetZoom, 1200L);
+                    isAnimatingToMyLocation = false;
+                }
+            } else {
+                SnackbarUtils.showError(
+                        findViewById(android.R.id.content),
+                        this,
+                        getString(R.string.snackbar_warning_location_permission)
+                );
+            }
+        });
+
+
+
     }
 
     private void setupMapEvents() {
