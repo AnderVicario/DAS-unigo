@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">UniGO</string>
     <string name="selected_marker">Selected marker</string>
@@ -13,16 +14,16 @@
     <string name="zoom_in">zoom in</string>
     <string name="zoom_out">zoom out</string>
     <string name="center">Center view</string>
-    <string name="ruta">"Ruta: "</string>
-    <string name="parada_des">Parada desconocida</string>
-    <string name="no_info_rutas">No hay información de rutas</string>
-    <string name="rutas">"Rutas: "</string>
-    <string name="perfil_no_soport">"Perfil no soportado: "</string>
-    <string name="err_ruta">Error al obtener la ruta:</string>
-    <string name="err_respuesta">Error en la respuesta:</string>
-    <string name="no_rutas">No se encontró ninguna ruta</string>
-    <string name="err_proc_resp">Error al procesar la respuesta:</string>
-    <string name="a_pie">A pie</string>
-    <string name="autobus">Autobús</string>
-    <string name="Bici">Bicicleta</string>
+    <string name="ruta">"Route: "</string>
+    <string name="parada_des">Unknown stop</string>
+    <string name="no_info_rutas">No information of routes available</string>
+    <string name="rutas">"Routes: "</string>
+    <string name="perfil_no_soport">"Not supported profile: "</string>
+    <string name="err_ruta">"Error obtaining route: "</string>
+    <string name="err_respuesta">"Error error in response: "</string>
+    <string name="no_rutas">Route not found</string>
+    <string name="err_proc_resp">Error processing response</string>
+    <string name="a_pie">By foot</string>
+    <string name="autobus">Bus</string>
+    <string name="Bici">Bike</string>
 </resources>

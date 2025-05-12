@@ -125,7 +125,7 @@ public class MapActivity extends AppCompatActivity {
             }
         });
 
-        routeCalculator = new RouteCalculator(map);
+        routeCalculator = new RouteCalculator(map, this);
         fabCalculateRoute = findViewById(R.id.fab_calculate_route);
         fabCalculateRoute.setVisibility(View.GONE);
         /*fabCalculateRoute.setOnClickListener(v -> calculateRouteToDestination());*/
@@ -167,7 +167,7 @@ public class MapActivity extends AppCompatActivity {
             SnackbarUtils.showSuccess(
                     findViewById(android.R.id.content),
                     this,
-                    "Ruta: " + transport.getMode() + "\n" +
+                    getString(R.string.ruta) + transport.getMode() + "\n" +
                             transport.getFormattedDistance() + " - " +
                             transport.getFormattedDuration()
             );
@@ -186,9 +186,9 @@ public class MapActivity extends AppCompatActivity {
                 public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
                     String modeName = "";
                     switch(profile) {
-                        case "foot": modeName = "A pie"; break;
-                        case "car": modeName = "Autobús"; break;
-                        case "bike": modeName = "Bicicleta"; break;
+                        case "foot": modeName = getString(R.string.a_pie); break;
+                        case "car": modeName = getString(R.string.autobus); break;
+                        case "bike": modeName = getString(R.string.Bici); break;
                     }
 
                     transportOptions.add(new Transport(
@@ -338,8 +338,8 @@ public class MapActivity extends AppCompatActivity {
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
 
         // Manejo seguro de nulos
-        String stopName = "Parada desconocida";
-        String routesInfo = "No hay información de rutas";
+        String stopName = getString(R.string.parada_des);
+        String routesInfo = getString(R.string.no_info_rutas);
 
         if (feature.properties != null) {
             stopName = (feature.properties.name != null) ?
@@ -351,7 +351,7 @@ public class MapActivity extends AppCompatActivity {
         }
 
         marker.setTitle(stopName);
-        marker.setSnippet("Rutas: " + routesInfo);
+        marker.setSnippet(getString(R.string.rutas) + routesInfo);
 
         CustomInfoWindow infoWindow = new CustomInfoWindow(map);
         marker.setInfoWindow(infoWindow);

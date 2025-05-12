@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UniGO</string>
+    <string name="selected_marker">Marcador seleccionado</string>
+    <string name="snackbar_warning_location_permission">Aviso sin ubicación</string>
+    <string name="select_location">Selecciona ubicación</string>
+    <string name="calculating_route">Calculando ruta...</string>
+    <string name="route_calculated">Ruta calculada</string>
+    <string name="location_not_available">Localización no disponible</string>
+    <string name="destination_marker">Marcador de destino</string>
+    <string name="calculate_route">Calcular ruta</string>
+    <string name="no_destination_selected">No has seleccionado un destino</string>
+    <string name="logo_description">Logo</string>
+    <string name="zoom_in">Zoom in</string>
+    <string name="zoom_out">Zoom in</string>
+    <string name="center">Centrar vista</string>
+    <string name="ruta">"Ruta: "</string>
+    <string name="parada_des">Parada desconocida</string>
+    <string name="no_info_rutas">No hay información de rutas</string>
+    <string name="rutas">"Rutas: "</string>
+    <string name="perfil_no_soport">Perfil no soportado:</string>
+    <string name="err_ruta">"Error al obtener la ruta: "</string>
+    <string name="err_respuesta">"Error en la respuesta: "</string>
+    <string name="no_rutas">No se encontró ninguna ruta</string>
+    <string name="err_proc_resp">"Error al procesar la respuesta: "</string>
+    <string name="a_pie">A pie</string>
+    <string name="autobus">Autobús</string>
+    <string name="Bici">Bicicleta</string>
+</resources>

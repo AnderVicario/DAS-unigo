@@ -1,5 +1,6 @@
 package com.unigo.utils;
 
+import android.content.Context;
 import android.graphics.Paint;
 import android.util.Log;
 
@@ -29,6 +30,7 @@ import okhttp3.Response;
 public class RouteCalculator {
     private static final String TAG = "RouteCalculator";
     private static final String HOST = "http://umbra.ddns.net";
+    private Context context;
 
     // Mapa de perfiles y puertos
     public static final Map<String, Integer> PROFILE_PORT_MAP = new HashMap<String, Integer>() {{
@@ -47,10 +49,11 @@ public class RouteCalculator {
         void onRouteError(String message);
     }
 
-    public RouteCalculator(MapView mapView) {
+    public RouteCalculator(MapView mapView, Context context) {
         this.mapView = mapView;
         this.client = new OkHttpClient();
         this.gson = new Gson();
+        this.context = context;
     }
 
     public void calculateRoute(String profile, GeoPoint start, GeoPoint end, RouteCallback callback) {
@@ -58,7 +61,7 @@ public class RouteCalculator {
 
         Integer port = PROFILE_PORT_MAP.get(profile);
         if (port == null) {
-            callback.onRouteError("Perfil no soportado: " + profile);
+            callback.onRouteError(context.getString(R.string.perfil_no_soport) + profile);
             return;
         }
 
@@ -75,13 +78,13 @@ public class RouteCalculator {
             @Override
             public void onFailure(Call call, IOException e) {
                 Log.e(TAG, "Error en la solicitud OSRM", e);
-                callback.onRouteError("Error al obtener la ruta: " + e.getMessage());
+                callback.onRouteError(context.getString(R.string.err_ruta) + e.getMessage());
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 if (!response.isSuccessful()) {
-                    callback.onRouteError("Error en la respuesta: " + response.code());
+                    callback.onRouteError(context.getString(R.string.err_respuesta) + response.code());
                     return;
                 }
 
@@ -90,7 +93,7 @@ public class RouteCalculator {
                     JsonObject jsonResponse = gson.fromJson(responseData, JsonObject.class);
 
                     if (!jsonResponse.has("routes") || jsonResponse.getAsJsonArray("routes").size() == 0) {
-                        callback.onRouteError("No se encontró ninguna ruta");
+                        callback.onRouteError(context.getString(R.string.no_rutas));
                         return;
                     }
 
@@ -106,7 +109,7 @@ public class RouteCalculator {
 
                 } catch (Exception e) {
                     Log.e(TAG, "Error al procesar la respuesta", e);
-                    callback.onRouteError("Error al procesar la respuesta: " + e.getMessage());
+                    callback.onRouteError(context.getString(R.string.err_proc_resp) + e.getMessage());
                 }
             }
         });

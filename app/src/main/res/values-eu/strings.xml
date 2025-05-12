@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UniGO</string>
+    <string name="selected_marker">Markatzaile hautatua</string>
+    <string name="snackbar_warning_location_permission">Kokapenik gabeko abisua</string>
+    <string name="select_location">Aukeratu kokapena</string>
+    <string name="calculating_route">Ibilbidea kalkulatzen...</string>
+    <string name="route_calculated">Ibilbidea kalkulatuta</string>
+    <string name="location_not_available">Kokapena ez dago eskuragarri</string>
+    <string name="destination_marker">Helburu markatzaile</string>
+    <string name="calculate_route">Kalkulatu ibilbidea</string>
+    <string name="no_destination_selected">Ez duzu helbururik aukeratu</string>
+    <string name="logo_description">Logoa</string>
+    <string name="zoom_in">Zoom in</string>
+    <string name="zoom_out">Zoom out</string>
+    <string name="center">Zentratu</string>
+    <string name="ruta">"Ibilbidea: "</string>
+    <string name="parada_des">Geltoki ezezaguna</string>
+    <string name="no_info_rutas">Ibilbide buruzko informazioarik ez</string>
+    <string name="rutas">"Ibilbideak: "</string>
+    <string name="perfil_no_soport">"Zerbitzurik gabeko profila: "</string>
+    <string name="err_ruta">"Errorea ibilbidea lortzerakoan: "</string>
+    <string name="err_respuesta">"Errorea erantzunean: "</string>
+    <string name="no_rutas">Ez da ibilbiderik aurkitu</string>
+    <string name="err_proc_resp">Errorea erantzuna prozesatzean</string>
+    <string name="a_pie">Oinez</string>
+    <string name="autobus">Autobusez</string>
+    <string name="Bici">Bizikletaz</string>
+</resources>
