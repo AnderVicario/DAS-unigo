@@ -1,6 +1,7 @@
 package com.unigo.utils;
 
-import android.annotation.SuppressLint;
+import static android.provider.Settings.System.getString;
+
 import android.view.View;
 import android.widget.TextView;
 
@@ -39,7 +40,7 @@ public class CustomInfoWindow extends InfoWindow {
         View view = getView();
         bindData(marker, view, markerType);
 
-        view.postDelayed(marker::closeInfoWindow, 3000);
+        view.postDelayed(marker::closeInfoWindow, 4000);
     }
 
     private void bindData(Marker marker, View view, MarkerType type) {
@@ -62,9 +63,13 @@ public class CustomInfoWindow extends InfoWindow {
         TextView id = view.findViewById(R.id.tv_id);
 
         title.setText(marker.getTitle());
-        description.setText(String.format(Locale.getDefault(), "Coords: %.5f, %.5f",
-                marker.getPosition().getLatitude(),
-                marker.getPosition().getLongitude()));
+        description.setText(
+                view.getContext().getString(
+                        R.string.coords_format,
+                        marker.getPosition().getLatitude(),
+                        marker.getPosition().getLongitude()
+                )
+        );
         GeoJsonParking.Feature data = (GeoJsonParking.Feature) marker.getRelatedObject();
         space_n.setText(String.format(Locale.getDefault(), "%.0f", data.getProperties().getSum()));
         id.setText(view.getContext().getString(R.string.bike_parking_id, Integer.toString(data.getProperties().getCLUSTER_ID())));

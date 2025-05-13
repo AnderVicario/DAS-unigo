@@ -28,5 +28,8 @@
     <string name="Bici">Bike</string>
     <string name="bike_parking_id">ID: %1$s</string>
     <string name="bus_stops">Bus stops</string>
-    <string name="bici_park">Bike parkings</string>
+    <string name="bike_parkings">Bike parkings</string>
+    <string name="bike_parking">Bike parking</string>
+    <string name="bus_stop">Bus stop</string>
+    <string name="coords_format">Coords: %.5f, %.5f</string>
 </resources>

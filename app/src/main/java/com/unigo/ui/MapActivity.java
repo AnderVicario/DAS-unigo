@@ -910,7 +910,7 @@ public class MapActivity extends AppCompatActivity {
 
         Marker marker = new Marker(map);
         marker.setPosition(point);
-        marker.setTitle("Parking de bicis");
+        marker.setTitle(ContextCompat.getString(this, R.string.bike_parking));
         marker.setIcon(ContextCompat.getDrawable(this, R.drawable.bike_parking_marker));
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
 

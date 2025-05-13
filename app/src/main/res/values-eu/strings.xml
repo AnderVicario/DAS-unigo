@@ -28,5 +28,8 @@
     <string name="Bici">Bizikletaz</string>
     <string name="bike_parking_id">ID: %1$s</string>
     <string name="bus_stops">Autobus geltokiak</string>
-    <string name="bici_park">Bizikleta parkingak</string>
+    <string name="bike_parkings">Bizikleta aparkalekuak</string>
+    <string name="bike_parking">Bizikleta aparkalekua</string>
+    <string name="bus_stop">Bus geltokia</string>
+    <string name="coords_format">Koordenatuak: %.5f, %.5f</string>
 </resources>
