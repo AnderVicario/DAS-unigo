@@ -26,4 +26,6 @@
     <string name="autobus">Autobús</string>
     <string name="Bici">Bicicleta</string>
     <string name="bike_parking_id">ID: %1$s</string>
+    <string name="bus_stops">Paradas de autobús</string>
+    <string name="bici_park">Parkings de bicicletas</string>
 </resources>

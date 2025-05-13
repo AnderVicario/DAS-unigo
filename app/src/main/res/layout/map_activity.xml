@@ -98,7 +98,7 @@
                     android:id="@+id/toggle_bike"
                     android:layout_width="wrap_content"
                     android:layout_height="32dp"
-                    android:text="@string/Bici_park"
+                    android:text="@string/bici_park"
                     android:textSize="12sp"
                     android:background="@drawable/round_button"
                     app:backgroundTint="@null"

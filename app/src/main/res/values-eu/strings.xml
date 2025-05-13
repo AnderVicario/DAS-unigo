@@ -27,4 +27,6 @@
     <string name="autobus">Autobusez</string>
     <string name="Bici">Bizikletaz</string>
     <string name="bike_parking_id">ID: %1$s</string>
+    <string name="bus_stops">Autobus geltokiak</string>
+    <string name="bici_park">Bizikleta parkingak</string>
 </resources>
