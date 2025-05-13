@@ -31,4 +31,6 @@
     <string name="bike_parkings">Parkings de bicicletas</string>
     <string name="bike_parking">Parking de bicis</string>
     <string name="coords_format">Coordenadas: %.5f, %.5f</string>
+    <string name="idioma">Idioma</string>
+    <string name="route_options">Opciones de ruta</string>
 </resources>

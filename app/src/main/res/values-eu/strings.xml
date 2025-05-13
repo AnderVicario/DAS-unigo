@@ -32,4 +32,6 @@
     <string name="bike_parking">Bizikleta aparkalekua</string>
     <string name="bus_stop">Bus geltokia</string>
     <string name="coords_format">Koordenatuak: %.5f, %.5f</string>
+    <string name="idioma">Hizkuntza</string>
+    <string name="route_options">Ibilbide aukerak</string>
 </resources>

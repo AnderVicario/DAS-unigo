@@ -22,17 +22,22 @@ import android.widget.LinearLayout;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.navigation.NavigationView;
 import com.unigo.R;
 import com.unigo.adapters.TransportAdapter;
 import com.unigo.models.GeoJsonParking;
@@ -80,6 +85,10 @@ public class MapActivity extends AppCompatActivity {
     private MyLocationNewOverlay myLocationOverlay;
     private RouteCalculator routeCalculator;
 
+    private DrawerLayout drawerLayout;
+    private ActionBarDrawerToggle toggle;
+    private NavigationView navigationView;
+
     private List<Transport> transportOptions = new ArrayList<>();
     private TransportAdapter adapter;
 
@@ -107,6 +116,7 @@ public class MapActivity extends AppCompatActivity {
         setupWindow();
         configureLogo();
         configureControls();
+        configureNavigation();
         configureZoom();
         configureBottomSheet();
         configureRecyclerView();
@@ -348,6 +358,23 @@ public class MapActivity extends AppCompatActivity {
                             transport.getFormattedDuration()
             );
         });
+    }
+
+    private void configureNavigation() {
+        drawerLayout = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+
+        // Configurar el botón de hamburguesa para abrir el drawer
+        ImageButton menuButton = findViewById(R.id.menu_button);
+        menuButton.setOnClickListener(v -> {
+            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START);
+            } else {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
+
     }
 
     // --------------------
