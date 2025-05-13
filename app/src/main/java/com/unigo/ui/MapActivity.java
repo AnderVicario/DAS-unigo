@@ -114,7 +114,7 @@ public class MapActivity extends AppCompatActivity {
         // Configuración de mapa
         setupMapEvents();
         loadBusStops();
-        routeCalculator = new RouteCalculator(map);
+        routeCalculator = new RouteCalculator(map, this);
         calculateAllRoutes(FIXED_DESTINATION);
 
     }
