@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -455,10 +456,16 @@ public class MapActivity extends AppCompatActivity {
                 map
         );
 
-        Drawable locationDrawable = ContextCompat.getDrawable(this, R.drawable.custom_location);
-        if (locationDrawable != null) {
-            Bitmap locationBitmap = drawableToBitmap(locationDrawable);
-            myLocationOverlay.setPersonIcon(locationBitmap);
+        Drawable arrowDrawable = ContextCompat.getDrawable(this, R.drawable.navigation);
+        if (arrowDrawable != null) {
+            arrowDrawable.setColorFilter(ContextCompat.getColor(this, R.color.onPrimary), PorterDuff.Mode.SRC_IN);
+            Bitmap arrowBitmap = drawableToBitmap(arrowDrawable);
+
+            // Asignar la flecha de movimiento al overlay
+            myLocationOverlay.setDirectionArrow(
+                    drawableToBitmap(ContextCompat.getDrawable(this, R.drawable.custom_location)),
+                    arrowBitmap
+            );
         }
 
         myLocationOverlay.setPersonAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
