@@ -33,9 +33,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.unigo.R;
 import com.unigo.adapters.TransportAdapter;
+import com.unigo.models.GeoJsonParking;
 import com.unigo.models.GeoJsonStop;
 import com.unigo.models.NearStopResponse;
 import com.unigo.models.Transport;
@@ -50,6 +50,7 @@ import org.osmdroid.events.MapListener;
 import org.osmdroid.events.ScrollEvent;
 import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
+import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.util.MapTileIndex;
 import org.osmdroid.views.CustomZoomButtonsController;
@@ -77,16 +78,20 @@ public class MapActivity extends AppCompatActivity {
     private Marker currentMarker;
     private MyLocationNewOverlay myLocationOverlay;
     private RouteCalculator routeCalculator;
-    private ExtendedFloatingActionButton fabCalculateRoute;
 
     private List<Transport> transportOptions = new ArrayList<>();
     private TransportAdapter adapter;
-    private List<GeoJsonStop.Feature> cachedBusStops = new ArrayList<>();
-    private BusStopsOverlay busStopsOverlay;
+
     private boolean inDetailedMode = false;
     private boolean isAnimatingToMyLocation = false;
 
     private boolean showBusStops = false;
+    private List<GeoJsonStop.Feature> cachedBusStops = new ArrayList<>();
+    private BusStopsOverlay busStopsOverlay;
+
+    private boolean showBikeParkings = false;
+    private List<GeoJsonParking.Feature> cachedBikeParkings = new ArrayList<>();
+    private BikeParkingsOverlay bikeParkingsOverlay;
 
     // --------------------
     // Ciclo de vida
@@ -112,6 +117,7 @@ public class MapActivity extends AppCompatActivity {
         // Configuración de mapa
         setupMapEvents();
         loadBusStops();
+        loadBikeParkings();
         routeCalculator = new RouteCalculator(map, this);
         calculateAllRoutes(FIXED_DESTINATION);
 
@@ -217,7 +223,9 @@ public class MapActivity extends AppCompatActivity {
 
             @Override
             public boolean onZoom(ZoomEvent event) {
-                updateVisualizationMode(event.getZoomLevel());
+                double currentZoom = event.getZoomLevel();
+                if (showBusStops) updateVisualizationModeForBus(currentZoom);
+                if (showBikeParkings) updateVisualizationModeForBike(currentZoom);
                 return true;
             }
         });
@@ -227,21 +235,39 @@ public class MapActivity extends AppCompatActivity {
         MaterialButton toggleBusButton = findViewById(R.id.toggle_bus);
         toggleBusButton.setOnClickListener(v -> {
             showBusStops = !showBusStops; // Invertir estado
-            updateToggleButtonAppearance(); // Actualizar apariencia
+            updateBusToggleButtonAppearance(); // Actualizar apariencia
             refreshMapOverlays(); // Actualizar overlays del mapa
             if (showBusStops) {
-                updateVisualizationMode(map.getZoomLevelDouble()); // Verificar zoom actual
+                updateVisualizationModeForBus(map.getZoomLevelDouble()); // Verificar zoom actual
+            }
+        });
+
+        MaterialButton toggleBikeButton = findViewById(R.id.toggle_bike);
+        toggleBikeButton.setOnClickListener(v -> {
+            showBikeParkings = !showBikeParkings;
+            updateBikeToggleButtonAppearance();
+            refreshMapOverlays();
+            if (showBikeParkings) {
+                updateVisualizationModeForBike(map.getZoomLevelDouble());
             }
         });
     }
 
-    private void updateToggleButtonAppearance() {
+    private void updateBusToggleButtonAppearance() {
         MaterialButton toggleBusButton = findViewById(R.id.toggle_bus);
         int backgroundRes = showBusStops ? R.drawable.round_button : R.drawable.round_button;
         int textColor = ContextCompat.getColor(this, showBusStops ? R.color.primary : R.color.onBackground);
 
         toggleBusButton.setBackgroundResource(backgroundRes);
         toggleBusButton.setTextColor(textColor);
+    }
+
+    private void updateBikeToggleButtonAppearance() {
+        MaterialButton toggleBikeButton = findViewById(R.id.toggle_bike);
+        int backgroundRes = showBikeParkings ? R.drawable.round_button : R.drawable.round_button;
+        int textColor = ContextCompat.getColor(this, showBikeParkings ? R.color.primary : R.color.onBackground);
+        toggleBikeButton.setBackgroundResource(backgroundRes);
+        toggleBikeButton.setTextColor(textColor);
     }
 
     private void configureBottomSheet() {
@@ -504,6 +530,37 @@ public class MapActivity extends AppCompatActivity {
         return bitmap;
     }
 
+    private void refreshMapOverlays() {
+        map.getOverlays().removeIf(overlay -> {
+            // Eliminar overlays según estado de los toggles
+            if (!showBusStops && (overlay instanceof BusStopsOverlay || isBusStopMarker(overlay))) return true;
+            if (!showBikeParkings && (overlay instanceof BikeParkingsOverlay || isBikeParkingMarker(overlay))) return true;
+
+            // Lógica de detalle para buses
+            if (showBusStops && overlay instanceof BusStopsOverlay) return inDetailedMode;
+            if (showBusStops && isBusStopMarker(overlay)) return !inDetailedMode;
+
+            // Lógica de detalle para parkings
+            if (showBikeParkings && overlay instanceof BikeParkingsOverlay) return inDetailedMode;
+            if (showBikeParkings && isBikeParkingMarker(overlay)) return !inDetailedMode;
+
+            return false;
+        });
+
+        // Añadir overlays activos
+        if (showBusStops) {
+            if (inDetailedMode) addDetailedMarkers();
+            else if (busStopsOverlay != null) map.getOverlays().add(busStopsOverlay);
+        }
+
+        if (showBikeParkings) {
+            if (inDetailedMode) addDetailedBikeMarkers();
+            else if (bikeParkingsOverlay != null) map.getOverlays().add(bikeParkingsOverlay);
+        }
+
+        map.invalidate();
+    }
+
     // ----------------------
     // Calculo de Rutas
     // ----------------------
@@ -550,7 +607,7 @@ public class MapActivity extends AppCompatActivity {
     private void loadBusStops() {
         if (!cachedBusStops.isEmpty()) {
             if (showBusStops) {
-                updateVisualizationMode(map.getZoomLevelDouble());
+                updateVisualizationModeForBus(map.getZoomLevelDouble());
             }
             return;
         }
@@ -575,7 +632,7 @@ public class MapActivity extends AppCompatActivity {
 
                     runOnUiThread(() -> {
                         busStopsOverlay = new BusStopsOverlay(points);
-                        updateVisualizationMode(map.getZoomLevelDouble());
+                        updateVisualizationModeForBus(map.getZoomLevelDouble());
                     });
                 }
             } catch (IOException e) {
@@ -653,7 +710,7 @@ public class MapActivity extends AppCompatActivity {
         }
     }
 
-    private void updateVisualizationMode(double currentZoom) {
+    private void updateVisualizationModeForBus(double currentZoom) {
         if (!showBusStops) return; // No hacer nada si están desactivadas
 
         double DETAIL_ZOOM_THRESHOLD = 16.5;
@@ -662,36 +719,6 @@ public class MapActivity extends AppCompatActivity {
             inDetailedMode = shouldBeDetailed;
             refreshMapOverlays();
         }
-    }
-
-    private void refreshMapOverlays() {
-        map.getOverlays().removeIf(overlay -> {
-            // Si las paradas están desactivadas, eliminar TODOS los elementos relacionados
-            if (!showBusStops) {
-                return overlay instanceof BusStopsOverlay || isBusStopMarker(overlay);
-            }
-            // Si están activadas, aplicar lógica normal de detalle
-            else {
-                if (overlay instanceof BusStopsOverlay) {
-                    return inDetailedMode; // Eliminar puntos simples si estamos en modo detallado
-                }
-                if (overlay instanceof Marker) {
-                    return isBusStopMarker(overlay); // Eliminar marcadores detallados si no es necesario
-                }
-                return false;
-            }
-        });
-
-        // Solo agregar overlays si están activados
-        if (showBusStops) {
-            if (inDetailedMode) {
-                addDetailedMarkers();
-            } else if (busStopsOverlay != null) {
-                map.getOverlays().add(busStopsOverlay);
-            }
-        }
-
-        map.invalidate();
     }
 
     private boolean isBusStopMarker(Overlay overlay) {
@@ -703,7 +730,7 @@ public class MapActivity extends AppCompatActivity {
     private void addDetailedMarkers() {
         if (!showBusStops) return; // No agregar si están desactivadas
 
-        final int BATCH_SIZE = 5;
+        final int BATCH_SIZE = 10;
         final Handler handler = new Handler();
         final AtomicInteger counter = new AtomicInteger(0);
 
@@ -730,5 +757,169 @@ public class MapActivity extends AppCompatActivity {
         };
 
         handler.post(markerAdder);
+    }
+
+    // --------------------
+    // Parkings de bicicletas
+    // --------------------
+
+    private void loadBikeParkings() {
+        if (!cachedBikeParkings.isEmpty()) {
+            if (showBikeParkings) {
+                updateVisualizationModeForBike(map.getZoomLevelDouble());
+            }
+            return;
+        }
+
+        new Thread(() -> {
+            APIService api = new APIService();
+            try {
+                GeoJsonParking parkings = api.getAllBikeParkings();
+                if (parkings != null && parkings.features != null) {
+                    cachedBikeParkings = parkings.features;
+
+                    List<GeoPoint> points = new ArrayList<>(parkings.features.size());
+                    for (GeoJsonParking.Feature feature : parkings.features) {
+                        if (feature.geometry != null &&
+                                feature.geometry.coordinates != null &&
+                                feature.geometry.coordinates.size() >= 2) {
+
+                            List<Double> coords = feature.geometry.coordinates;
+                            points.add(new GeoPoint(coords.get(1), coords.get(0))); // GeoJSON usa [lon, lat]
+                        }
+                    }
+
+                    runOnUiThread(() -> {
+                        bikeParkingsOverlay = new BikeParkingsOverlay(points);
+                        updateVisualizationModeForBike(map.getZoomLevelDouble());
+                    });
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Error cargando parkings", e);
+            }
+        }).start();
+    }
+
+    private class BikeParkingsOverlay extends Overlay {
+        private final List<GeoPoint> parkings;
+        private final Bitmap pointBitmap;
+        private final Paint paint;
+        private final Point reusePoint = new Point();
+
+        public BikeParkingsOverlay(List<GeoPoint> parkings) {
+            this.parkings = parkings;
+            pointBitmap = Bitmap.createBitmap(6, 6, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(pointBitmap);
+            paint = new Paint();
+            paint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.secondary));
+            paint.setAntiAlias(true);
+            canvas.drawCircle(3, 3, 3, paint);
+        }
+
+        @Override
+        public void draw(Canvas canvas, MapView mapView, boolean shadow) {
+            if (shadow || parkings == null || parkings.isEmpty()) return;
+
+            Projection projection = mapView.getProjection();
+            for (GeoPoint parking : parkings) {
+                projection.toPixels(parking, reusePoint);
+                canvas.drawBitmap(pointBitmap, reusePoint.x - 3, reusePoint.y - 3, paint);
+            }
+        }
+    }
+
+    private void updateVisualizationModeForBike(double currentZoom) {
+        if (!showBikeParkings) return;
+
+        double DETAIL_ZOOM_THRESHOLD = 16.5;
+        boolean shouldBeDetailed = currentZoom >= DETAIL_ZOOM_THRESHOLD;
+        if (shouldBeDetailed != inDetailedMode) {
+            inDetailedMode = shouldBeDetailed;
+            refreshMapOverlays();
+        }
+    }
+
+    private boolean isBikeParkingMarker(Overlay overlay) {
+        if (!(overlay instanceof Marker)) return false;
+        Marker marker = (Marker) overlay;
+        return marker.getTitle() != null && marker.getTitle().startsWith("Parking");
+    }
+
+    private void addDetailedBikeMarkers() {
+        if (!showBikeParkings) return;
+
+        // 1. Obtener el bounding box actual del mapa
+        BoundingBox mapBounds = map.getBoundingBox();
+
+        // 2. Separar features en dentro/fuera del viewport
+        List<GeoJsonParking.Feature> inViewport = new ArrayList<>();
+        List<GeoJsonParking.Feature> outOfViewport = new ArrayList<>();
+
+        for (GeoJsonParking.Feature feature : cachedBikeParkings) {
+            if (feature.geometry == null || feature.geometry.coordinates == null) continue;
+
+            List<Double> coords = feature.geometry.coordinates;
+            double lat = coords.get(1);
+            double lon = coords.get(0);
+
+            if (mapBounds.contains(lat, lon)) {
+                inViewport.add(feature);
+            } else {
+                outOfViewport.add(feature);
+            }
+        }
+
+        // 3. Combinar listas (primero los del viewport)
+        List<GeoJsonParking.Feature> prioritizedFeatures = new ArrayList<>();
+        prioritizedFeatures.addAll(inViewport);
+        prioritizedFeatures.addAll(outOfViewport);
+
+        final int BATCH_SIZE = 10;
+        final Handler handler = new Handler();
+        final AtomicInteger counter = new AtomicInteger(0);
+
+        Runnable markerAdder = new Runnable() {
+            @Override
+            public void run() {
+                if (!inDetailedMode || !showBikeParkings) return;
+
+                int start = counter.get();
+                int end = Math.min(start + BATCH_SIZE, prioritizedFeatures.size());
+
+                for (int i = start; i < end; i++) {
+                    GeoJsonParking.Feature feature = prioritizedFeatures.get(i);
+                    addBikeParkingMarker(feature);
+                }
+
+                counter.set(end);
+                if (end < prioritizedFeatures.size()) {
+                    handler.postDelayed(this, 30);
+                }
+            }
+        };
+
+        handler.post(markerAdder);
+    }
+
+    private void addBikeParkingMarker(GeoJsonParking.Feature feature) {
+        if (feature.geometry == null || feature.geometry.coordinates == null) return;
+
+        List<Double> coords = feature.geometry.coordinates;
+        GeoPoint point = new GeoPoint(coords.get(1), coords.get(0)); // [lon, lat] to GeoPoint
+
+        Marker marker = new Marker(map);
+        marker.setPosition(point);
+        marker.setIcon(ContextCompat.getDrawable(this, R.drawable.bike_parking_marker));
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+
+        String title = "Parking de bicis";
+        String spots = (feature.properties != null) ? String.valueOf(feature.properties.sum) : "N/A";
+        marker.setTitle(title);
+        marker.setSnippet("Plazas: " + spots);
+
+        CustomInfoWindow infoWindow = new CustomInfoWindow(map);
+        marker.setInfoWindow(infoWindow);
+
+        map.getOverlays().add(marker);
     }
 }

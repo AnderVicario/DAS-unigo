@@ -18,7 +18,7 @@ public class GeoJsonParking {
     }
 
     public static class Properties {
-        public int PLAZAS;
-        public String DENOMINACI;
+        public int CLUSTER_ID;
+        public double sum;
     }
 }
