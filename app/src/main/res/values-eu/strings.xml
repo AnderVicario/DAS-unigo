@@ -39,4 +39,8 @@
     <string name="more">Gehiago...</string>
     <string name="selec_idioma">Hizkuntza hautatu</string>
     <string name="cancelar">Ezeztatu</string>
+    <string name="schedule">Ohiko ordutegia</string>
+    <string name="summer_schedule">Udako ordutegia</string>
+    <string name="address">Helbidea</string>
+    <string name="close">Itxi</string>
 </resources>

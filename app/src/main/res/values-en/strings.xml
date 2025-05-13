@@ -39,4 +39,8 @@
     <string name="cancelar">Cancel</string>
     <string name="library">Library</string>
     <string name="more">More...</string>
+    <string name="schedule">Regular schedule</string>
+    <string name="summer_schedule">Summer schedule</string>
+    <string name="address">Adress</string>
+    <string name="close">Close</string>
 </resources>

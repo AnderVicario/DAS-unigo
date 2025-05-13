@@ -2,9 +2,11 @@ package com.unigo.utils;
 
 import static android.provider.Settings.System.getString;
 
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.unigo.R;
 import com.unigo.models.GeoJsonLibrary;
 import com.unigo.models.GeoJsonParking;
@@ -69,6 +71,8 @@ public class CustomInfoWindow extends InfoWindow {
         TextView name = view.findViewById(R.id.tv_name);
         TextView adress = view.findViewById(R.id.tv_adress);
         TextView id = view.findViewById(R.id.tv_id);
+        TextView tvMoreInfo = view.findViewById(R.id.tv_more_info);
+        tvMoreInfo.setOnClickListener(v -> showDetailDialog(marker));
 
         title.setText(marker.getTitle());
         description.setText(
@@ -149,6 +153,61 @@ public class CustomInfoWindow extends InfoWindow {
             }
         }
         return result.toString().trim();
+    }
+
+    private void showDetailDialog(Marker marker) {
+        GeoJsonLibrary.Feature data = (GeoJsonLibrary.Feature) marker.getRelatedObject();
+        GeoJsonLibrary.Properties properties = data.getProperties();
+
+        // Inflar el layout del diálogo
+        View dialogView = LayoutInflater.from(mMapView.getContext())
+                .inflate(R.layout.dialog_library_details, null);
+
+        // Obtener referencias de las vistas
+        TextView tvTitle = dialogView.findViewById(R.id.tv_dialog_title);
+        TextView tvDescription = dialogView.findViewById(R.id.tv_dialog_description);
+        TextView tvSchedule = dialogView.findViewById(R.id.tv_schedule);
+        TextView tvSummerSchedule = dialogView.findViewById(R.id.tv_summer_schedule);
+        TextView tvAddress = dialogView.findViewById(R.id.tv_address);
+        TextView tvPhone = dialogView.findViewById(R.id.tv_phone);
+        TextView tvEmail = dialogView.findViewById(R.id.tv_email);
+        TextView tvWebsite = dialogView.findViewById(R.id.tv_website);
+        TextView tvDataSource = dialogView.findViewById(R.id.tv_data_source);
+
+        // Configurar los datos
+        tvTitle.setText(properties.getDocumentname());
+        tvDescription.setText(marker.getTitle());
+
+        tvSchedule.setText(
+                String.format("%s: %s",
+                        mMapView.getContext().getString(R.string.schedule),
+                        properties.getLibrarytimetable())
+        );
+
+        tvSummerSchedule.setText(
+                String.format("%s: %s",
+                        mMapView.getContext().getString(R.string.summer_schedule),
+                        properties.getLibrarysummertimetable())
+        );
+
+        tvAddress.setText(
+                String.format("%s: %s, %s (%s)",
+                        mMapView.getContext().getString(R.string.address),
+                        properties.getAddress(),
+                        properties.getMunicipality(),
+                        properties.getPostalcode())
+        );
+
+        tvPhone.setText(properties.getPhone());
+        tvEmail.setText(properties.getEmail());
+        tvWebsite.setText(properties.getFriendlyurl());
+        tvDataSource.setText(properties.getPhysicalurl());
+
+        // Crear y mostrar el diálogo
+        new MaterialAlertDialogBuilder(mMapView.getContext(), R.style.RoundedDialog)
+                .setView(dialogView)
+                .setPositiveButton(R.string.close, (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
     @Override

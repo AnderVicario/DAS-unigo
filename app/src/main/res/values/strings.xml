@@ -38,4 +38,8 @@
     <string name="more">Leer más...</string>
     <string name="selec_idioma">Seleccionar idioma</string>
     <string name="cancelar">Cancelar</string>
+    <string name="schedule">Horario regular</string>
+    <string name="summer_schedule">Horario de verano</string>
+    <string name="address">Dirección</string>
+    <string name="close">Cerrar</string>
 </resources>
