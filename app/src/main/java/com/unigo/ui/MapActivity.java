@@ -1129,6 +1129,11 @@ public class MapActivity extends AppCompatActivity {
         marker.setInfoWindow(new CustomInfoWindow(map, MarkerType.LIBRARY));
         map.getOverlays().add(marker);
     }
+
+    // -----------------
+    // Idiomas
+    // ----------------
+
     private void dialogoIdioma() {
         SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
         String[] idiomas = {"Español", "English", "Euskara"};
