@@ -36,4 +36,6 @@
     <string name="public_libraries">Librerías públicas</string>
     <string name="library">Librería</string>
     <string name="more">Leer más...</string>
+    <string name="selec_idioma">Seleccionar idioma</string>
+    <string name="cancelar">Cancelar</string>
 </resources>

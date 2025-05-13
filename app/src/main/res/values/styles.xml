@@ -5,7 +5,7 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
     </style>
-    <style name="rounded_corners" parent="@style/Theme.UniGO">>
+    <style name="rounded_corners" parent="@style/Theme.UniGO">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">8dp</item>
     </style>
@@ -22,6 +22,11 @@
     </style>
     <style name="RoundedDialog" parent="">
         <item name="android:background">@color/surface</item>
+    </style>
+    <style name="ThemeOverlay.Unigo.MaterialAlertDialog"
+        parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="android:background">@color/surface</item>
+        <item name="shapeAppearanceOverlay">@style/rounded_corners</item>
     </style>
     <style name="RoundedButton" parent="Widget.MaterialComponents.ExtendedFloatingActionButton">
         <item name="cornerRadius">16dp</item>

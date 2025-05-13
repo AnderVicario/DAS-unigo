@@ -37,4 +37,6 @@
     <string name="public_libraries">Liburutegi publikoak</string>
     <string name="library">Liburutegia</string>
     <string name="more">Gehiago...</string>
+    <string name="selec_idioma">Hizkuntza hautatu</string>
+    <string name="cancelar">Ezeztatu</string>
 </resources>

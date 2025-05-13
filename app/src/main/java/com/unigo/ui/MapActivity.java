@@ -3,6 +3,9 @@ package com.unigo.ui;
 import static com.unigo.utils.RouteCalculator.PROFILE_PORT_MAP;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -23,6 +26,7 @@ import android.widget.LinearLayout;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -47,6 +51,7 @@ import com.unigo.models.NearStopResponse;
 import com.unigo.models.Transport;
 import com.unigo.utils.APIService;
 import com.unigo.utils.CustomInfoWindow;
+import com.unigo.utils.LocaleHelper;
 import com.unigo.utils.MarkerType;
 import com.unigo.utils.RouteCalculator;
 import com.unigo.utils.SnackbarUtils;
@@ -390,6 +395,15 @@ public class MapActivity extends AppCompatActivity {
             } else {
                 drawerLayout.openDrawer(GravityCompat.START);
             }
+        });
+        navigationView.setNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_idioma) {
+                dialogoIdioma();
+            }
+            // Cerrar el drawer tras la selección
+            drawerLayout.closeDrawer(GravityCompat.START);
+            return true;
         });
 
     }
@@ -1115,4 +1129,55 @@ public class MapActivity extends AppCompatActivity {
         marker.setInfoWindow(new CustomInfoWindow(map, MarkerType.LIBRARY));
         map.getOverlays().add(marker);
     }
+    private void dialogoIdioma() {
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        String[] idiomas = {"Español", "English", "Euskara"};
+        final String[] codigos = {"es", "en", "eu"};
+
+        // Recuperar el idioma actual
+        String idiomaActual = prefs.getString("idioma", "es");
+        int selectedIndex = 0;
+        for (int i = 0; i < codigos.length; i++) {
+            if (codigos[i].equals(idiomaActual)) {
+                selectedIndex = i;
+                break;
+            }
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.ThemeOverlay_Unigo_MaterialAlertDialog);
+        builder.setTitle(R.string.selec_idioma);
+        builder.setSingleChoiceItems(idiomas, selectedIndex, (dialog, which) -> {
+            String idiomaSeleccionado = codigos[which];
+            if (!idiomaSeleccionado.equals(idiomaActual)) {
+                prefs.edit().putString("idioma", idiomaSeleccionado).apply();
+
+                // Reiniciar Activity para que se aplique el nuevo locale
+                Intent intent = new Intent(MapActivity.this, MapActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                finish();
+            }
+            dialog.dismiss();
+        });
+        builder.setNegativeButton(R.string.cancelar, null);
+        builder.show();
+    }
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        SharedPreferences prefs = newBase.getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        String idioma = prefs.getString("idioma", "es");
+        super.attachBaseContext(LocaleHelper.setLocale(newBase, idioma));
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Para que se vuelva a aplicar si hay cambios de configuración (p.e. rotación)
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        String idioma = prefs.getString("idioma", "es");
+        LocaleHelper.setLocale(this, idioma);
+    }
+
+
 }
