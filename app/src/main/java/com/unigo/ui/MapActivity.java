@@ -3,7 +3,6 @@ package com.unigo.ui;
 import static com.unigo.utils.RouteCalculator.PROFILE_PORT_MAP;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -85,7 +84,6 @@ public class MapActivity extends AppCompatActivity {
     private List<GeoJsonStop.Feature> cachedBusStops = new ArrayList<>();
     private BusStopsOverlay busStopsOverlay;
     private boolean inDetailedMode = false;
-    private final double DETAIL_ZOOM_THRESHOLD = 16.5;
     private boolean isAnimatingToMyLocation = false;
 
     private boolean showBusStops = false;
@@ -99,9 +97,6 @@ public class MapActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_activity);
 
-        // Permisos
-        requestLocationPermission();
-
         // Configuración de UI
         setupWindow();
         configureLogo();
@@ -110,6 +105,9 @@ public class MapActivity extends AppCompatActivity {
         configureBottomSheet();
         configureRecyclerView();
         configureHorizontalScrollView();
+
+        // Permisos
+        requestLocationPermission();
 
         // Configuración de mapa
         setupMapEvents();
@@ -658,6 +656,7 @@ public class MapActivity extends AppCompatActivity {
     private void updateVisualizationMode(double currentZoom) {
         if (!showBusStops) return; // No hacer nada si están desactivadas
 
+        double DETAIL_ZOOM_THRESHOLD = 16.5;
         boolean shouldBeDetailed = currentZoom >= DETAIL_ZOOM_THRESHOLD;
         if (shouldBeDetailed != inDetailedMode) {
             inDetailedMode = shouldBeDetailed;
