@@ -35,4 +35,6 @@
     <string name="idioma">Language</string>
     <string name="route_options">Route options</string>
     <string name="public_libraries">Public libraries</string>
+    <string name="library">Library</string>
+    <string name="more">More...</string>
 </resources>

@@ -40,6 +40,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.navigation.NavigationView;
 import com.unigo.R;
 import com.unigo.adapters.TransportAdapter;
+import com.unigo.models.GeoJsonLibrary;
 import com.unigo.models.GeoJsonParking;
 import com.unigo.models.GeoJsonStop;
 import com.unigo.models.NearStopResponse;
@@ -103,6 +104,10 @@ public class MapActivity extends AppCompatActivity {
     private List<GeoJsonParking.Feature> cachedBikeParkings = new ArrayList<>();
     private BikeParkingsOverlay bikeParkingsOverlay;
 
+    private boolean showLibraries = false;
+    private List<GeoJsonLibrary.Feature> cachedLibraries = new ArrayList<>();
+    private LibrariesOverlay librariesOverlay;
+
     // --------------------
     // Ciclo de vida
     // --------------------
@@ -129,6 +134,7 @@ public class MapActivity extends AppCompatActivity {
         setupMapEvents();
         loadBusStops();
         loadBikeParkings();
+        loadLibraries();
         routeCalculator = new RouteCalculator(map, this);
         calculateAllRoutes(FIXED_DESTINATION);
 
@@ -237,6 +243,7 @@ public class MapActivity extends AppCompatActivity {
                 double currentZoom = event.getZoomLevel();
                 if (showBusStops) updateVisualizationModeForBus(currentZoom);
                 if (showBikeParkings) updateVisualizationModeForBike(currentZoom);
+                if (showLibraries) updateVisualizationModeForLibraries(currentZoom);
                 return true;
             }
         });
@@ -260,6 +267,16 @@ public class MapActivity extends AppCompatActivity {
             refreshMapOverlays();
             if (showBikeParkings) {
                 updateVisualizationModeForBike(map.getZoomLevelDouble());
+            }
+        });
+
+        MaterialButton toggleLibraryButton = findViewById(R.id.toggle_library);
+        toggleLibraryButton.setOnClickListener(v -> {
+            showLibraries = !showLibraries;
+            updateLibraryToggleButtonAppearance();
+            refreshMapOverlays();
+            if (showLibraries) {
+                updateVisualizationModeForLibraries(map.getZoomLevelDouble());
             }
         });
     }
@@ -563,6 +580,7 @@ public class MapActivity extends AppCompatActivity {
             // Eliminar overlays según estado de los toggles
             if (!showBusStops && (overlay instanceof BusStopsOverlay || isBusStopMarker(overlay))) return true;
             if (!showBikeParkings && (overlay instanceof BikeParkingsOverlay || isBikeParkingMarker(overlay))) return true;
+            if (!showLibraries && (overlay instanceof LibrariesOverlay || isLibraryMarker(overlay))) return true;
 
             // Lógica de detalle para buses
             if (showBusStops && overlay instanceof BusStopsOverlay) return inDetailedMode;
@@ -571,6 +589,10 @@ public class MapActivity extends AppCompatActivity {
             // Lógica de detalle para parkings
             if (showBikeParkings && overlay instanceof BikeParkingsOverlay) return inDetailedMode;
             if (showBikeParkings && isBikeParkingMarker(overlay)) return !inDetailedMode;
+
+            // Lógica de detalle para librerías
+            if (showLibraries && overlay instanceof LibrariesOverlay) return inDetailedMode;
+            if (showLibraries && isLibraryMarker(overlay)) return !inDetailedMode;
 
             return false;
         });
@@ -584,6 +606,11 @@ public class MapActivity extends AppCompatActivity {
         if (showBikeParkings) {
             if (inDetailedMode) addDetailedBikeMarkers();
             else if (bikeParkingsOverlay != null) map.getOverlays().add(bikeParkingsOverlay);
+        }
+
+        if (showLibraries) {
+            if (inDetailedMode) addDetailedLibraryMarkers();
+            else if (librariesOverlay != null) map.getOverlays().add(librariesOverlay);
         }
 
         map.invalidate();
@@ -925,6 +952,167 @@ public class MapActivity extends AppCompatActivity {
 
         marker.setRelatedObject(feature);
         marker.setInfoWindow(new CustomInfoWindow(map, MarkerType.BIKE_PARKING));
+        map.getOverlays().add(marker);
+    }
+
+    // ---------------
+    // Librerias
+    // --------------
+
+    private void updateLibraryToggleButtonAppearance() {
+        MaterialButton toggleLibraryButton = findViewById(R.id.toggle_library);
+        int textColor = ContextCompat.getColor(this, showLibraries ? R.color.primary : R.color.onBackground);
+        toggleLibraryButton.setTextColor(textColor);
+    }
+
+    private void loadLibraries() {
+        if (!cachedLibraries.isEmpty()) {
+            if (showLibraries) {
+                updateVisualizationModeForLibraries(map.getZoomLevelDouble());
+            }
+            return;
+        }
+
+        new Thread(() -> {
+            APIService api = new APIService();
+            try {
+                GeoJsonLibrary libraries = api.getAllLibraries();
+                if (libraries != null && libraries.features != null) {
+                    List<GeoPoint> points = new ArrayList<>();
+                    List<GeoJsonLibrary.Feature> filteredLibraries = new ArrayList<>(); // Lista filtrada
+
+                    for (GeoJsonLibrary.Feature feature : libraries.features) {
+                        // Verificar municipio y coordenadas
+                        if (feature.properties != null &&
+                                "Vitoria - Gasteiz".equalsIgnoreCase(feature.properties.municipality) &&
+                                feature.geometry != null &&
+                                feature.geometry.coordinates != null &&
+                                feature.geometry.coordinates.size() >= 2) {
+
+                            List<Double> coords = feature.geometry.coordinates;
+                            points.add(new GeoPoint(coords.get(1), coords.get(0)));
+                            filteredLibraries.add(feature); // Añadir a la lista filtrada
+                        }
+                    }
+
+                    cachedLibraries = filteredLibraries; // Guardar solo las filtradas
+
+                    runOnUiThread(() -> {
+                        librariesOverlay = new LibrariesOverlay(points);
+                        updateVisualizationModeForLibraries(map.getZoomLevelDouble());
+                    });
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Error cargando bibliotecas", e);
+            }
+        }).start();
+    }
+
+    private class LibrariesOverlay extends Overlay {
+        private final List<GeoPoint> libraries;
+        private final Bitmap pointBitmap;
+        private final Paint paint;
+        private final Point reusePoint = new Point();
+
+        public LibrariesOverlay(List<GeoPoint> libraries) {
+            this.libraries = libraries;
+            pointBitmap = Bitmap.createBitmap(6, 6, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(pointBitmap);
+            paint = new Paint();
+            paint.setColor(ContextCompat.getColor(getApplicationContext(), R.color.primaryVariant));
+            paint.setAntiAlias(true);
+            canvas.drawCircle(3, 3, 3, paint);
+        }
+
+        @Override
+        public void draw(Canvas canvas, MapView mapView, boolean shadow) {
+            if (shadow || libraries == null || libraries.isEmpty()) return;
+
+            Projection projection = mapView.getProjection();
+            for (GeoPoint library : libraries) {
+                projection.toPixels(library, reusePoint);
+                canvas.drawBitmap(pointBitmap, reusePoint.x - 3, reusePoint.y - 3, paint);
+            }
+        }
+    }
+
+    private void updateVisualizationModeForLibraries(double currentZoom) {
+        if (!showLibraries) return;
+
+        double DETAIL_ZOOM_THRESHOLD = 18;
+        boolean shouldBeDetailed = currentZoom >= DETAIL_ZOOM_THRESHOLD;
+        if (shouldBeDetailed != inDetailedMode) {
+            inDetailedMode = shouldBeDetailed;
+            refreshMapOverlays();
+        }
+    }
+
+    private boolean isLibraryMarker(Overlay overlay) {
+        if (!(overlay instanceof Marker)) return false;
+        Marker marker = (Marker) overlay;
+        return marker.getTitle() != null && marker.getTitle().equals(getString(R.string.library));
+    }
+
+    private void addDetailedLibraryMarkers() {
+        if (!showLibraries) return;
+
+        BoundingBox mapBounds = map.getBoundingBox();
+        List<GeoJsonLibrary.Feature> prioritizedFeatures = new ArrayList<>();
+
+        for (GeoJsonLibrary.Feature feature : cachedLibraries) {
+            if (feature.geometry != null && feature.geometry.coordinates != null) {
+                double lat = feature.geometry.coordinates.get(1);
+                double lon = feature.geometry.coordinates.get(0);
+                if (mapBounds.contains(lat, lon)) {
+                    prioritizedFeatures.add(0, feature); // Prioridad a los del viewport
+                } else {
+                    prioritizedFeatures.add(feature);
+                }
+            }
+        }
+
+        final int BATCH_SIZE = 5;
+        final Handler handler = new Handler();
+        final AtomicInteger counter = new AtomicInteger(0);
+
+        Runnable markerAdder = new Runnable() {
+            @Override
+            public void run() {
+                if (!inDetailedMode || !showLibraries) return;
+
+                int start = counter.get();
+                int end = Math.min(start + BATCH_SIZE, prioritizedFeatures.size());
+
+                for (int i = start; i < end; i++) {
+                    GeoJsonLibrary.Feature feature = prioritizedFeatures.get(i);
+                    addLibraryMarker(feature);
+                }
+
+                counter.set(end);
+                if (end < prioritizedFeatures.size()) {
+                    handler.postDelayed(this, 30);
+                }
+            }
+        };
+
+        handler.post(markerAdder);
+    }
+
+    private void addLibraryMarker(GeoJsonLibrary.Feature feature) {
+        if (feature.geometry == null || feature.geometry.coordinates == null) return;
+
+        List<Double> coords = feature.geometry.coordinates;
+        GeoPoint point = new GeoPoint(coords.get(1), coords.get(0));
+
+        Marker marker = new Marker(map);
+        marker.setPosition(point);
+        marker.setTitle(ContextCompat.getString(this, R.string.library));
+        marker.setSnippet(feature.properties.address);
+        marker.setIcon(ContextCompat.getDrawable(this, R.drawable.library_marker));
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+
+        marker.setRelatedObject(feature);
+        marker.setInfoWindow(new CustomInfoWindow(map, MarkerType.LIBRARY));
         map.getOverlays().add(marker);
     }
 }

@@ -35,4 +35,6 @@
     <string name="idioma">Hizkuntza</string>
     <string name="route_options">Ibilbide aukerak</string>
     <string name="public_libraries">Liburutegi publikoak</string>
+    <string name="library">Liburutegia</string>
+    <string name="more">Gehiago...</string>
 </resources>

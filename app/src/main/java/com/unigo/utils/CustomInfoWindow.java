@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.unigo.R;
+import com.unigo.models.GeoJsonLibrary;
 import com.unigo.models.GeoJsonParking;
 import com.unigo.models.GeoJsonStop;
 
@@ -30,6 +31,8 @@ public class CustomInfoWindow extends InfoWindow {
                 return R.layout.bike_infoview;
             case BUS_STOP:
                 return R.layout.bus_infoview;
+            case LIBRARY:
+                return R.layout.library_infoview;
             default:
                 return R.layout.custom_infoview;
         }
@@ -52,9 +55,33 @@ public class CustomInfoWindow extends InfoWindow {
             case BUS_STOP:
                 bindBusStopData(marker, view);
                 break;
+            case LIBRARY:
+                bindLibraryData(marker, view);
+                break;
             default:
                 bindDefaultData(marker, view);
         }
+    }
+
+    private void bindLibraryData(Marker marker, View view) {
+        TextView title = view.findViewById(R.id.tv_title);
+        TextView description = view.findViewById(R.id.tv_description);
+        TextView name = view.findViewById(R.id.tv_name);
+        TextView adress = view.findViewById(R.id.tv_adress);
+        TextView id = view.findViewById(R.id.tv_id);
+
+        title.setText(marker.getTitle());
+        description.setText(
+                view.getContext().getString(
+                        R.string.coords_format,
+                        marker.getPosition().getLatitude(),
+                        marker.getPosition().getLongitude()
+                )
+        );
+        GeoJsonLibrary.Feature data = (GeoJsonLibrary.Feature) marker.getRelatedObject();
+        name.setText(insertLineBreaksSmart(data.getProperties().getDocumentname(), 30));
+        adress.setText(insertLineBreaksSmart(data.getProperties().getAddress(), 30));
+        id.setText(view.getContext().getString(R.string.bike_parking_id, Integer.toString(data.id)));
     }
 
     private void bindBikeParkingData(Marker marker, View view) {
@@ -101,6 +128,27 @@ public class CustomInfoWindow extends InfoWindow {
 
         title.setText(marker.getTitle());
         snippet.setText(marker.getSnippet());
+    }
+
+    private String insertLineBreaksSmart(String text, int maxLineLength) {
+        StringBuilder result = new StringBuilder();
+        int start = 0;
+        while (start < text.length()) {
+            int end = Math.min(start + maxLineLength, text.length());
+
+            if (end < text.length() && text.charAt(end) != ' ') {
+                int lastSpace = text.lastIndexOf(' ', end);
+                if (lastSpace > start) {
+                    end = lastSpace;
+                }
+            }
+            result.append(text, start, end).append("\n");
+            start = end;
+            while (start < text.length() && text.charAt(start) == ' ') {
+                start++;
+            }
+        }
+        return result.toString().trim();
     }
 
     @Override

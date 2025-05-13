@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="@drawable/round_dialog"
+    android:backgroundTint="@color/surface_50"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/onSurface"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:text="Biblioteca"/>
+
+    <TextView
+        android:id="@+id/tv_description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/onSurface"
+        android:textStyle="italic"
+        android:textSize="12sp"
+        android:text="Coords: 42.8395, -2.6703"/>
+
+    <TextView
+        android:id="@+id/tv_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/onSurface"
+        android:textStyle="normal"
+        android:textSize="12sp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:breakStrategy="balanced"
+        android:hyphenationFrequency="full"
+        android:justificationMode="inter_word"
+        android:text="Vitoria-Gasteiz - Biblioteca \nMunicipal Infantil y Juvenil Ibaiondo"/>
+
+    <TextView
+        android:id="@+id/tv_adress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Landaberde, 31"
+        android:textColor="@color/onSurface"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/tv_more_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:drawableEnd="@drawable/ic_expand_more"
+        android:drawablePadding="4dp"
+        android:gravity="center_vertical"
+        android:paddingTop="4dp"
+        android:text="@string/more"
+        android:textColor="@color/primary"
+        android:textSize="12sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/onSurface" />
+
+    <TextView
+        android:id="@+id/tv_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/onSurface"
+        android:textSize="12sp"
+        android:text="ID: #2011"/>
+
+</LinearLayout>
