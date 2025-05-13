@@ -35,4 +35,6 @@
     <string name="idioma">Hizkuntza</string>
     <string name="route_options">Ibilbide aukerak</string>
     <string name="public_libraries">Liburutegi publikoak</string>
+    <string name="selec_idioma">Hizkuntza hautatu</string>
+    <string name="cancelar">Ezeztatu</string>
 </resources>

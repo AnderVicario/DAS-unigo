@@ -35,4 +35,6 @@
     <string name="idioma">Idioma</string>
     <string name="route_options">Opciones de ruta</string>
     <string name="public_libraries">Librerías públicas</string>
+    <string name="selec_idioma">Seleccionar idioma</string>
+    <string name="cancelar">Cancelar</string>
 </resources>
