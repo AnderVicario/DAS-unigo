@@ -1,6 +1,7 @@
 package com.unigo.utils;
 
 import com.google.gson.Gson;
+import com.unigo.models.GeoJsonParking;
 import com.unigo.models.GeoJsonStop;
 import com.unigo.models.NearStopResponse;
 
@@ -11,15 +12,26 @@ import okhttp3.Response;
 import java.io.IOException;
 import java.util.Locale;
 
-public class BusRoutesAPI {
+public class APIService {
 
     private static final String BASE_URL = "http://umbra.ddns.net:5003";
     private final OkHttpClient client;
     private final Gson gson;
 
-    public BusRoutesAPI() {
+    public APIService() {
         this.client = new OkHttpClient();
         this.gson = new Gson();
+    }
+
+    public GeoJsonParking getAllBikeParkings() throws IOException {
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/parkings/geojson")  // Endpoint específico de parkings
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            String json = response.body().string();
+            return gson.fromJson(json, GeoJsonParking.class);
+        }
     }
 
     public GeoJsonStop getAllStops() throws IOException {

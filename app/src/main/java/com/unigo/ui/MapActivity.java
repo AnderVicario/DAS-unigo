@@ -40,7 +40,7 @@ import com.unigo.adapters.TransportAdapter;
 import com.unigo.models.GeoJsonStop;
 import com.unigo.models.NearStopResponse;
 import com.unigo.models.Transport;
-import com.unigo.utils.BusRoutesAPI;
+import com.unigo.utils.APIService;
 import com.unigo.utils.CustomInfoWindow;
 import com.unigo.utils.RouteCalculator;
 import com.unigo.utils.SnackbarUtils;
@@ -82,7 +82,6 @@ public class MapActivity extends AppCompatActivity {
 
     private List<Transport> transportOptions = new ArrayList<>();
     private TransportAdapter adapter;
-    private List<GeoPoint> allBusStops = new ArrayList<>();
     private List<GeoJsonStop.Feature> cachedBusStops = new ArrayList<>();
     private BusStopsOverlay busStopsOverlay;
     private boolean inDetailedMode = false;
@@ -91,12 +90,67 @@ public class MapActivity extends AppCompatActivity {
 
     private boolean showBusStops = false;
 
+    // --------------------
+    // Ciclo de vida
+    // --------------------
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_activity);
-        setupWindow();
 
+        // Permisos
+        requestLocationPermission();
+
+        // Configuración de UI
+        setupWindow();
+        configureLogo();
+        configureControls();
+        configureZoom();
+        configureBottomSheet();
+        configureRecyclerView();
+        configureHorizontalScrollView();
+
+        // Configuración de mapa
+        setupMapEvents();
+        loadBusStops();
+        routeCalculator = new RouteCalculator(map);
+        calculateAllRoutes(FIXED_DESTINATION);
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (myLocationOverlay != null) myLocationOverlay.enableMyLocation();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (myLocationOverlay != null) myLocationOverlay.disableMyLocation();
+    }
+
+    // --------------------
+    // Configuración de UI
+    // --------------------
+
+    private void setupWindow() {
+        EdgeToEdge.enable(this);
+        View view = findViewById(R.id.main);
+        Window window = getWindow();
+        window.setStatusBarColor(getResources().getColor(R.color.background, getTheme()));
+        WindowCompat.setDecorFitsSystemWindows(window, false);
+
+        // padding top para evitar que el contenido esté debajo del status bar
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            int topInset = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            v.setPadding(0, topInset, 0, 0);
+            return insets;
+        });
+    }
+
+    private void configureLogo() {
         ImageView ivLogo = findViewById(R.id.iv_logo);
         int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
         if (currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
@@ -106,340 +160,6 @@ public class MapActivity extends AppCompatActivity {
             initializeMap("light");
             ivLogo.setImageResource(R.drawable.logo_light);
         }
-        loadBusStops();
-
-        configureControls();
-        setupMapEvents();
-        requestLocationPermission();
-
-        map.addMapListener(new MapListener() {
-            @Override
-            public boolean onScroll(ScrollEvent event) {
-                return false;
-            }
-
-            @Override
-            public boolean onZoom(ZoomEvent event) {
-                updateVisualizationMode(event.getZoomLevel());
-                return true;
-            }
-        });
-
-        routeCalculator = new RouteCalculator(map, this);
-        fabCalculateRoute = findViewById(R.id.fab_calculate_route);
-        fabCalculateRoute.setVisibility(View.GONE);
-        /*fabCalculateRoute.setOnClickListener(v -> calculateRouteToDestination());*/
-
-        configureBottomSheet();
-        configureRecyclerView();
-        calculateAllRoutes(FIXED_DESTINATION);
-
-        MaterialButton toggleBusButton = findViewById(R.id.toggle_bus);
-        toggleBusButton.setOnClickListener(v -> {
-            showBusStops = !showBusStops; // Invertir estado
-            updateToggleButtonAppearance(); // Actualizar apariencia
-            refreshMapOverlays(); // Actualizar overlays del mapa
-            if (showBusStops) {
-                updateVisualizationMode(map.getZoomLevelDouble()); // Verificar zoom actual
-            }
-        });
-    }
-
-    private void updateToggleButtonAppearance() {
-        MaterialButton toggleBusButton = findViewById(R.id.toggle_bus);
-        int backgroundRes = showBusStops ? R.drawable.round_button : R.drawable.round_button;
-        int textColor = ContextCompat.getColor(this, showBusStops ? R.color.primary : R.color.onBackground);
-
-        toggleBusButton.setBackgroundResource(backgroundRes);
-        toggleBusButton.setTextColor(textColor);
-    }
-
-    private void configureRecyclerView() {
-        RecyclerView recyclerView = findViewById(R.id.route_options);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        adapter = new TransportAdapter(this, transportOptions);
-        recyclerView.setAdapter(adapter);
-
-        adapter.setOnTransportClickListener(transport -> {
-            routeCalculator.clearExistingRoute();
-            routeCalculator.drawRoute(transport.getRoutePoints());
-            SnackbarUtils.showSuccess(
-                    findViewById(android.R.id.content),
-                    this,
-                    getString(R.string.ruta) + transport.getMode() + "\n" +
-                            transport.getFormattedDistance() + " - " +
-                            transport.getFormattedDuration()
-            );
-        });
-    }
-
-    private void calculateAllRoutes(GeoPoint destination) {
-        if (myLocationOverlay == null || myLocationOverlay.getMyLocation() == null) return;
-
-        transportOptions.clear();
-        GeoPoint start = myLocationOverlay.getMyLocation();
-
-        for (String profile : PROFILE_PORT_MAP.keySet()) {
-            routeCalculator.calculateRoute(profile, start, destination, new RouteCalculator.RouteCallback() {
-                @Override
-                public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
-                    String modeName = "";
-                    switch(profile) {
-                        case "foot": modeName = getString(R.string.a_pie); break;
-                        case "car": modeName = getString(R.string.autobus); break;
-                        case "bike": modeName = getString(R.string.Bici); break;
-                    }
-
-                    transportOptions.add(new Transport(
-                            modeName,
-                            distanceKm,
-                            durationMinutes,
-                            points
-                    ));
-
-                    runOnUiThread(() -> adapter.notifyDataSetChanged());
-                }
-
-                @Override
-                public void onRouteError(String message) {
-                    Log.e(TAG, "Error en perfil " + profile + ": " + message);
-                }
-            });
-        }
-    }
-
-
-    private void configureBottomSheet() {
-        LinearLayout bottomSheet = findViewById(R.id.bottom_sheet);
-        LinearLayout zoomControlsContainer = findViewById(R.id.zoom_controls_container);
-        LinearLayout buttonContainer = findViewById(R.id.button_container);
-
-        BottomSheetBehavior<LinearLayout> behavior = BottomSheetBehavior.from(bottomSheet);
-
-        int peekHeightPx = dpToPx(50);
-        behavior.setPeekHeight(peekHeightPx);
-        behavior.setHideable(false);
-        behavior.setFitToContents(true);
-        behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-        behavior.setSaveFlags(BottomSheetBehavior.SAVE_ALL);
-
-        // Callback para actualizar durante el drag
-        behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-            @Override
-            public void onStateChanged(@NonNull View bs, int newState) { /* ... */ }
-
-            @Override
-            public void onSlide(@NonNull View bs, float slideOffset) {
-                int height = bs.getHeight();
-                int baseOffset = dpToPx(70);
-                float translationY = -baseOffset - (slideOffset * (height - peekHeightPx));
-                zoomControlsContainer.setTranslationY(translationY);
-                buttonContainer.setTranslationY(translationY);
-            }
-        });
-
-        // Listener para saber cuándo bottomSheet ya tiene tamaño
-        bottomSheet.getViewTreeObserver().addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        // Una vez medido, aplicamos la posición inicial (slideOffset = 0)
-                        int height = bottomSheet.getHeight();
-                        int baseOffset = dpToPx(70);
-                        float translationY = -baseOffset; // -baseOffset - (0 * ...)
-                        zoomControlsContainer.setTranslationY(translationY);
-                        buttonContainer.setTranslationY(translationY);
-
-                        // Y eliminamos el listener para no repetir
-                        bottomSheet.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                }
-        );
-
-        // Click sobre el handle para alternar estados
-        findViewById(R.id.drag_handle).setOnClickListener(v -> {
-            if (behavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
-                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-            } else {
-                behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-            }
-        });
-    }
-
-    // Método de utilidad para convertir dp a píxeles
-    private int dpToPx(int dp) {
-        return (int) (dp * getResources().getDisplayMetrics().density);
-    }
-
-    private void requestLocationPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    PERMISSION_REQUEST_CODE);
-        } else {
-            setupLocationOverlay();
-        }
-    }
-
-    private void loadBusStops() {
-        if (!cachedBusStops.isEmpty()) {
-            if (showBusStops) {
-                updateVisualizationMode(map.getZoomLevelDouble());
-            }
-            return;
-        }
-
-        new Thread(() -> {
-            BusRoutesAPI api = new BusRoutesAPI();
-            try {
-                GeoJsonStop stops = api.getAllStops();
-                if (stops != null && stops.features != null) {
-                    cachedBusStops = stops.features;
-
-                    List<GeoPoint> points = new ArrayList<>(stops.features.size());
-                    for (GeoJsonStop.Feature feature : stops.features) {
-                        if (feature.geometry != null &&
-                                feature.geometry.coordinates != null &&
-                                feature.geometry.coordinates.size() >= 2) {
-
-                            List<Double> coords = feature.geometry.coordinates;
-                            points.add(new GeoPoint(coords.get(1), coords.get(0)));
-                        }
-                    }
-
-                    runOnUiThread(() -> {
-                        busStopsOverlay = new BusStopsOverlay(points);
-                        updateVisualizationMode(map.getZoomLevelDouble());
-                    });
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "Error cargando paradas", e);
-            }
-        }).start();
-    }
-
-    private void addBusStopMarker(GeoJsonStop.Feature feature) {
-        if (feature.geometry == null ||
-                feature.geometry.coordinates == null ||
-                feature.geometry.coordinates.size() < 2) {
-            return;
-        }
-
-        List<Double> coordinates = feature.geometry.coordinates;
-        double lon = coordinates.get(0);
-        double lat = coordinates.get(1);
-        GeoPoint point = new GeoPoint(lat, lon);
-
-        Marker marker = new Marker(map);
-        marker.setPosition(point);
-        marker.setIcon(ContextCompat.getDrawable(this, R.drawable.bus_stop_marker));
-        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-
-        // Manejo seguro de nulos
-        String stopName = getString(R.string.parada_des);
-        String routesInfo = getString(R.string.no_info_rutas);
-
-        if (feature.properties != null) {
-            stopName = (feature.properties.name != null) ?
-                    feature.properties.name : stopName;
-
-            if (feature.properties.routes != null && !feature.properties.routes.isEmpty()) {
-                routesInfo = String.join(", ", feature.properties.routes);
-            }
-        }
-
-        marker.setTitle(stopName);
-        marker.setSnippet(getString(R.string.rutas) + routesInfo);
-
-        CustomInfoWindow infoWindow = new CustomInfoWindow(map);
-        marker.setInfoWindow(infoWindow);
-
-        map.getOverlays().add(marker);
-    }
-
-    private void setupLocationOverlay() {
-        myLocationOverlay = new MyLocationNewOverlay(
-                new GpsMyLocationProvider(getApplicationContext()),
-                map
-        );
-
-        Drawable locationDrawable = ContextCompat.getDrawable(this, R.drawable.custom_location);
-        if (locationDrawable != null) {
-            Bitmap locationBitmap = drawableToBitmap(locationDrawable);
-            myLocationOverlay.setPersonIcon(locationBitmap);
-        }
-
-        myLocationOverlay.setPersonAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        myLocationOverlay.enableMyLocation();
-        myLocationOverlay.setDrawAccuracyEnabled(true);
-        myLocationOverlay.runOnFirstFix(() -> runOnUiThread(() -> {
-            if (myLocationOverlay.getMyLocation() != null) {
-                map.getController().setCenter(myLocationOverlay.getMyLocation());
-                map.getController().setZoom(17.0);
-
-                // Recalcular rutas cuando se obtiene la ubicación
-                calculateAllRoutes(FIXED_DESTINATION);
-
-                // Se ejecuta en un hilo porque las operaciones de red no pueden ir en el hilo principal
-                BusRoutesAPI api = new BusRoutesAPI();
-                new Thread(() -> {
-                    try {
-                        NearStopResponse res = api.findNearStop(myLocationOverlay.getMyLocation().getLatitude(), myLocationOverlay.getMyLocation().getLongitude(), 300);
-                        Log.i(TAG, "Parada: " + res.stop_name);
-                        Log.i(TAG, "Distancia: " + res.distance_m + "m");
-                        Log.i(TAG, "Rutas: " + String.join(", ", res.routes));
-                        Log.i(TAG, "¿Universidad?: " + res.is_university_route);
-                    } catch (IOException e) {
-                        Log.e(TAG, "Error al consultar la API", e);
-                    }
-                }).start();
-            }
-        }));
-
-        map.getOverlays().add(myLocationOverlay);
-    }
-
-    private void initializeMap(String mode) {
-        Configuration.getInstance().load(getApplicationContext(), getPreferences(MODE_PRIVATE));
-        map = findViewById(R.id.map);
-
-        if (Objects.equals(mode, "light")) {
-            map.setTileSource(new XYTileSource("CartoVoyager", 0, 20, 512, ".png",
-                    new String[] {
-                            "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
-                            "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
-                            "https://c.basemaps.cartocdn.com/rastertiles/voyager/" }) {
-                @Override
-                public String getTileURLString(long pMapTileIndex) {
-                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
-                            MapTileIndex.getX(pMapTileIndex) + "/" +
-                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
-                }
-            });
-        } else {
-            map.setTileSource(new XYTileSource("CartoDark", 0, 20, 512, ".png",
-                    new String[] {
-                            "https://a.basemaps.cartocdn.com/dark_all/",
-                            "https://b.basemaps.cartocdn.com/dark_all/",
-                            "https://c.basemaps.cartocdn.com/dark_all/" }) {
-                @Override
-                public String getTileURLString(long pMapTileIndex) {
-                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
-                            MapTileIndex.getX(pMapTileIndex) + "/" +
-                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
-                }
-            });
-        }
-
-        map.setMultiTouchControls(true);
-        centerMapOnLocation(FIXED_DESTINATION, 17.0); // Gazteiz
-    }
-
-    private void centerMapOnLocation(GeoPoint point, double zoomLevel) {
-        map.getController().setZoom(zoomLevel);
-        map.getController().setCenter(point);
     }
 
     private void configureControls() {
@@ -488,9 +208,166 @@ public class MapActivity extends AppCompatActivity {
                 );
             }
         });
+    }
 
+    private void configureZoom() {
+        map.addMapListener(new MapListener() {
+            @Override
+            public boolean onScroll(ScrollEvent event) {
+                return false;
+            }
 
+            @Override
+            public boolean onZoom(ZoomEvent event) {
+                updateVisualizationMode(event.getZoomLevel());
+                return true;
+            }
+        });
+    }
 
+    private void configureHorizontalScrollView() {
+        MaterialButton toggleBusButton = findViewById(R.id.toggle_bus);
+        toggleBusButton.setOnClickListener(v -> {
+            showBusStops = !showBusStops; // Invertir estado
+            updateToggleButtonAppearance(); // Actualizar apariencia
+            refreshMapOverlays(); // Actualizar overlays del mapa
+            if (showBusStops) {
+                updateVisualizationMode(map.getZoomLevelDouble()); // Verificar zoom actual
+            }
+        });
+    }
+
+    private void updateToggleButtonAppearance() {
+        MaterialButton toggleBusButton = findViewById(R.id.toggle_bus);
+        int backgroundRes = showBusStops ? R.drawable.round_button : R.drawable.round_button;
+        int textColor = ContextCompat.getColor(this, showBusStops ? R.color.primary : R.color.onBackground);
+
+        toggleBusButton.setBackgroundResource(backgroundRes);
+        toggleBusButton.setTextColor(textColor);
+    }
+
+    private void configureBottomSheet() {
+        LinearLayout bottomSheet = findViewById(R.id.bottom_sheet);
+        LinearLayout zoomControlsContainer = findViewById(R.id.zoom_controls_container);
+
+        BottomSheetBehavior<LinearLayout> behavior = BottomSheetBehavior.from(bottomSheet);
+
+        int peekHeightPx = dpToPx(50);
+        behavior.setPeekHeight(peekHeightPx);
+        behavior.setHideable(false);
+        behavior.setFitToContents(true);
+        behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        behavior.setSaveFlags(BottomSheetBehavior.SAVE_ALL);
+
+        // Callback para actualizar durante el drag
+        behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bs, int newState) { /* ... */ }
+
+            @Override
+            public void onSlide(@NonNull View bs, float slideOffset) {
+                int height = bs.getHeight();
+                int baseOffset = dpToPx(70);
+                float translationY = -baseOffset - (slideOffset * (height - peekHeightPx));
+                zoomControlsContainer.setTranslationY(translationY);
+            }
+        });
+
+        // Listener para saber cuándo bottomSheet ya tiene tamaño
+        bottomSheet.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        // Una vez medido, aplicamos la posición inicial (slideOffset = 0)
+                        int height = bottomSheet.getHeight();
+                        int baseOffset = dpToPx(70);
+                        float translationY = -baseOffset; // -baseOffset - (0 * ...)
+                        zoomControlsContainer.setTranslationY(translationY);
+
+                        // Y eliminamos el listener para no repetir
+                        bottomSheet.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                }
+        );
+
+        // Click sobre el handle para alternar estados
+        findViewById(R.id.drag_handle).setOnClickListener(v -> {
+            if (behavior.getState() == BottomSheetBehavior.STATE_COLLAPSED) {
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            } else {
+                behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            }
+        });
+    }
+
+    // Método de utilidad para convertir dp a píxeles
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
+    }
+
+    private void configureRecyclerView() {
+        RecyclerView recyclerView = findViewById(R.id.route_options);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        adapter = new TransportAdapter(this, transportOptions);
+        recyclerView.setAdapter(adapter);
+
+        adapter.setOnTransportClickListener(transport -> {
+            routeCalculator.clearExistingRoute();
+            routeCalculator.drawRoute(transport.getRoutePoints());
+            SnackbarUtils.showSuccess(
+                    findViewById(android.R.id.content),
+                    this,
+                    "Ruta: " + transport.getMode() + "\n" +
+                            transport.getFormattedDistance() + " - " +
+                            transport.getFormattedDuration()
+            );
+        });
+    }
+
+    // --------------------
+    // Configuración del MAPA
+    // --------------------
+
+    private void initializeMap(String mode) {
+        Configuration.getInstance().load(getApplicationContext(), getPreferences(MODE_PRIVATE));
+        map = findViewById(R.id.map);
+
+        if (Objects.equals(mode, "light")) {
+            map.setTileSource(new XYTileSource("CartoVoyager", 0, 20, 512, ".png",
+                    new String[] {
+                            "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
+                            "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
+                            "https://c.basemaps.cartocdn.com/rastertiles/voyager/" }) {
+                @Override
+                public String getTileURLString(long pMapTileIndex) {
+                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                            MapTileIndex.getX(pMapTileIndex) + "/" +
+                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
+                }
+            });
+        } else {
+            map.setTileSource(new XYTileSource("CartoDark", 0, 20, 512, ".png",
+                    new String[] {
+                            "https://a.basemaps.cartocdn.com/dark_all/",
+                            "https://b.basemaps.cartocdn.com/dark_all/",
+                            "https://c.basemaps.cartocdn.com/dark_all/" }) {
+                @Override
+                public String getTileURLString(long pMapTileIndex) {
+                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                            MapTileIndex.getX(pMapTileIndex) + "/" +
+                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
+                }
+            });
+        }
+
+        map.setMultiTouchControls(true);
+        centerMapOnLocation(FIXED_DESTINATION, 17.0); // Gazteiz
+    }
+
+    private void centerMapOnLocation(GeoPoint point, double zoomLevel) {
+        map.getController().setZoom(zoomLevel);
+        map.getController().setCenter(point);
     }
 
     private void setupMapEvents() {
@@ -515,6 +392,81 @@ public class MapActivity extends AppCompatActivity {
         addNewMarker(position);
     }
 
+    // -------------------
+    // Permisos
+    // -------------------
+
+    private void requestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSION_REQUEST_CODE);
+        } else {
+            setupLocationOverlay();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                setupLocationOverlay();
+            } else {
+                SnackbarUtils.showError(findViewById(android.R.id.content), this,
+                        getString(R.string.snackbar_warning_location_permission));
+            }
+        }
+    }
+
+    // ----------------------
+    // Funcionalidades principales
+    // ----------------------
+
+    private void setupLocationOverlay() {
+        myLocationOverlay = new MyLocationNewOverlay(
+                new GpsMyLocationProvider(getApplicationContext()),
+                map
+        );
+
+        Drawable locationDrawable = ContextCompat.getDrawable(this, R.drawable.custom_location);
+        if (locationDrawable != null) {
+            Bitmap locationBitmap = drawableToBitmap(locationDrawable);
+            myLocationOverlay.setPersonIcon(locationBitmap);
+        }
+
+        myLocationOverlay.setPersonAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        myLocationOverlay.enableMyLocation();
+        myLocationOverlay.setDrawAccuracyEnabled(true);
+        myLocationOverlay.runOnFirstFix(() -> runOnUiThread(() -> {
+            if (myLocationOverlay.getMyLocation() != null) {
+                map.getController().setCenter(myLocationOverlay.getMyLocation());
+                map.getController().setZoom(17.0);
+
+                // Recalcular rutas cuando se obtiene la ubicación
+                calculateAllRoutes(FIXED_DESTINATION);
+
+                // Se ejecuta en un hilo porque las operaciones de red no pueden ir en el hilo principal
+                APIService api = new APIService();
+                new Thread(() -> {
+                    try {
+                        NearStopResponse res = api.findNearStop(myLocationOverlay.getMyLocation().getLatitude(), myLocationOverlay.getMyLocation().getLongitude(), 300);
+                        Log.i(TAG, "Parada: " + res.stop_name);
+                        Log.i(TAG, "Distancia: " + res.distance_m + "m");
+                        Log.i(TAG, "Rutas: " + String.join(", ", res.routes));
+                        Log.i(TAG, "¿Universidad?: " + res.is_university_route);
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error al consultar la API", e);
+                    }
+                }).start();
+            }
+        }));
+
+        map.getOverlays().add(myLocationOverlay);
+    }
+
     private void addNewMarker(GeoPoint position) {
         routeCalculator.clearExistingRoute();
         removeExistingMarker();
@@ -530,8 +482,6 @@ public class MapActivity extends AppCompatActivity {
 
         map.getOverlays().add(currentMarker);
         map.invalidate();
-
-        /*fabCalculateRoute.setVisibility(View.VISIBLE);*/
     }
 
     private void removeExistingMarker() {
@@ -556,56 +506,123 @@ public class MapActivity extends AppCompatActivity {
         return bitmap;
     }
 
-    private void setupWindow() {
-        EdgeToEdge.enable(this);
-        View view = findViewById(R.id.main);
-        Window window = getWindow();
-        window.setStatusBarColor(getResources().getColor(R.color.background, getTheme()));
-        WindowCompat.setDecorFitsSystemWindows(window, false);
+    // ----------------------
+    // Calculo de Rutas
+    // ----------------------
 
-        // padding top para evitar que el contenido esté debajo del status bar
-        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
-            int topInset = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
-            v.setPadding(0, topInset, 0, 0);
-            return insets;
-        });
-    }
+    private void calculateAllRoutes(GeoPoint destination) {
+        if (myLocationOverlay == null || myLocationOverlay.getMyLocation() == null) return;
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (myLocationOverlay != null) myLocationOverlay.enableMyLocation();
-    }
+        transportOptions.clear();
+        GeoPoint start = myLocationOverlay.getMyLocation();
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (myLocationOverlay != null) myLocationOverlay.disableMyLocation();
-    }
+        for (String profile : PROFILE_PORT_MAP.keySet()) {
+            routeCalculator.calculateRoute(profile, start, destination, new RouteCalculator.RouteCallback() {
+                @Override
+                public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
+                    String modeName = "";
+                    switch(profile) {
+                        case "foot": modeName = "A pie"; break;
+                        case "car": modeName = "Autobús"; break;
+                        case "bike": modeName = "Bicicleta"; break;
+                    }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                setupLocationOverlay();
-            } else {
-                SnackbarUtils.showError(findViewById(android.R.id.content), this,
-                        getString(R.string.snackbar_warning_location_permission));
-            }
+                    transportOptions.add(new Transport(
+                            modeName,
+                            distanceKm,
+                            durationMinutes,
+                            points
+                    ));
+
+                    runOnUiThread(() -> adapter.notifyDataSetChanged());
+                }
+
+                @Override
+                public void onRouteError(String message) {
+                    Log.e(TAG, "Error en perfil " + profile + ": " + message);
+                }
+            });
         }
     }
 
-    @SuppressLint("DefaultLocale")
-    private String createMarkerTitle(GeoPoint position) {
-        return String.format("Lat: %.4f\nLon: %.4f",
-                position.getLatitude(), position.getLongitude());
+    // ----------------------
+    // Paradas de autobús
+    // ----------------------
+
+    private void loadBusStops() {
+        if (!cachedBusStops.isEmpty()) {
+            if (showBusStops) {
+                updateVisualizationMode(map.getZoomLevelDouble());
+            }
+            return;
+        }
+
+        new Thread(() -> {
+            APIService api = new APIService();
+            try {
+                GeoJsonStop stops = api.getAllStops();
+                if (stops != null && stops.features != null) {
+                    cachedBusStops = stops.features;
+
+                    List<GeoPoint> points = new ArrayList<>(stops.features.size());
+                    for (GeoJsonStop.Feature feature : stops.features) {
+                        if (feature.geometry != null &&
+                                feature.geometry.coordinates != null &&
+                                feature.geometry.coordinates.size() >= 2) {
+
+                            List<Double> coords = feature.geometry.coordinates;
+                            points.add(new GeoPoint(coords.get(1), coords.get(0)));
+                        }
+                    }
+
+                    runOnUiThread(() -> {
+                        busStopsOverlay = new BusStopsOverlay(points);
+                        updateVisualizationMode(map.getZoomLevelDouble());
+                    });
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Error cargando paradas", e);
+            }
+        }).start();
     }
 
-    private void showCoordinatesToast(GeoPoint position) {
-        SnackbarUtils.showSuccess(findViewById(android.R.id.content), this,
-                getString(R.string.selected_marker) + createMarkerTitle(position));
+    private void addBusStopMarker(GeoJsonStop.Feature feature) {
+        if (feature.geometry == null ||
+                feature.geometry.coordinates == null ||
+                feature.geometry.coordinates.size() < 2) {
+            return;
+        }
+
+        List<Double> coordinates = feature.geometry.coordinates;
+        double lon = coordinates.get(0);
+        double lat = coordinates.get(1);
+        GeoPoint point = new GeoPoint(lat, lon);
+
+        Marker marker = new Marker(map);
+        marker.setPosition(point);
+        marker.setIcon(ContextCompat.getDrawable(this, R.drawable.bus_stop_marker));
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+
+        // Manejo seguro de nulos
+        String stopName = "Parada desconocida";
+        String routesInfo = "No hay información de rutas";
+
+        if (feature.properties != null) {
+            stopName = (feature.properties.name != null) ?
+                    feature.properties.name : stopName;
+
+            if (feature.properties.routes != null && !feature.properties.routes.isEmpty()) {
+                routesInfo = String.join(", ", feature.properties.routes);
+            }
+        }
+
+        marker.setTitle(stopName);
+        marker.setSnippet("Rutas: " + routesInfo);
+
+        CustomInfoWindow infoWindow = new CustomInfoWindow(map);
+        marker.setInfoWindow(infoWindow);
+
+        map.getOverlays().add(marker);
     }
 
     private class BusStopsOverlay extends Overlay {
