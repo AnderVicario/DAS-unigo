@@ -1,192 +1,226 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_coordinator"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
     android:fitsSystemWindows="false">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/main"
+    <!-- Contenido principal -->
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/main_coordinator"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/background"
         android:fitsSystemWindows="false">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/main"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
+            android:layout_height="match_parent"
             android:background="@color/background"
-            android:theme="?attr/toolbarStyle"
-            app:layout_constraintTop_toTopOf="parent">
+            android:fitsSystemWindows="false">
 
-            <ImageView
-                android:id="@+id/iv_logo"
-                android:padding="6dp"
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:contentDescription="@string/logo_description"
-                app:srcCompat="@drawable/logo_light"
-                tools:layout_editor_absoluteX="213dp"
-                tools:layout_editor_absoluteY="16dp" />
+                android:layout_height="44dp"
+                android:background="@color/background"
+                android:theme="?attr/toolbarStyle"
+                app:layout_constraintTop_toTopOf="parent">
 
-        </androidx.appcompat.widget.Toolbar>
+                <!-- Icono de hamburguesa -->
+                <ImageButton
+                    android:id="@+id/menu_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="start"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Menú principal"
+                    android:padding="8dp"
+                    app:srcCompat="@drawable/menu" />
 
-        <View
-            android:id="@+id/border_primary"
-            android:layout_width="0dp"
-            android:layout_height="5dp"
-            android:background="@color/primary"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/toolbar" />
+                <ImageView
+                    android:id="@+id/iv_logo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/logo_description"
+                    android:padding="6dp"
+                    app:srcCompat="@drawable/logo_light"
+                    tools:layout_editor_absoluteX="213dp"
+                    tools:layout_editor_absoluteY="16dp" />
 
-        <View
-            android:id="@+id/border_secondary"
-            android:layout_width="0dp"
-            android:layout_height="2dp"
-            android:background="@color/onBackground"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/border_primary" />
+            </androidx.appcompat.widget.Toolbar>
 
-        <org.osmdroid.views.MapView
-            android:id="@+id/map"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/border_secondary" />
+            <View
+                android:id="@+id/border_primary"
+                android:layout_width="0dp"
+                android:layout_height="5dp"
+                android:background="@color/primary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
-        <HorizontalScrollView
-            android:id="@+id/buttons_scroll"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@id/border_secondary"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            <View
+                android:id="@+id/border_secondary"
+                android:layout_width="0dp"
+                android:layout_height="2dp"
+                android:background="@color/onBackground"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/border_primary" />
 
-            <LinearLayout
-                android:layout_width="wrap_content"
+            <org.osmdroid.views.MapView
+                android:id="@+id/map"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/border_secondary" />
+
+            <HorizontalScrollView
+                android:id="@+id/buttons_scroll"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="4dp"
-                android:orientation="horizontal">
+                app:layout_constraintTop_toBottomOf="@id/border_secondary"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/toggle_bus"
+                <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:text="@string/bus_stops"
-                    android:textSize="12sp"
-                    android:background="@drawable/round_button"
-                    app:backgroundTint="@null"
+                    android:layout_height="wrap_content"
                     android:padding="4dp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"/>
+                    android:orientation="horizontal">
 
-                <Space
-                    android:layout_width="8dp"
-                    android:layout_height="wrap_content" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/toggle_bus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:text="@string/bus_stops"
+                        android:textSize="12sp"
+                        android:background="@drawable/round_button"
+                        app:backgroundTint="@null"
+                        android:padding="4dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"/>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/toggle_bike"
-                    android:layout_width="wrap_content"
-                    android:layout_height="32dp"
-                    android:text="@string/bike_parkings"
-                    android:textSize="12sp"
-                    android:background="@drawable/round_button"
-                    app:backgroundTint="@null"
-                    android:padding="4dp"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp"/>
+                    <Space
+                        android:layout_width="8dp"
+                        android:layout_height="wrap_content" />
 
-            </LinearLayout>
-        </HorizontalScrollView>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/toggle_bike"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:text="@string/bike_parkings"
+                        android:textSize="12sp"
+                        android:background="@drawable/round_button"
+                        app:backgroundTint="@null"
+                        android:padding="4dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"/>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+                </LinearLayout>
+            </HorizontalScrollView>
 
-    <LinearLayout
-        android:id="@+id/zoom_controls_container"
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <LinearLayout
+            android:id="@+id/zoom_controls_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:fitsSystemWindows="true"
+            android:orientation="vertical">
+
+            <!-- Botón para centrar ubicación -->
+            <ImageButton
+                android:id="@+id/btnMyLocation"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/round_button"
+                android:src="@drawable/crosshairs_gps"
+                android:contentDescription="@string/center"
+                app:tint="@color/onSurface"/>
+
+            <ImageButton
+                android:id="@+id/btnZoomIn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/round_button"
+                android:src="@drawable/ic_zoom_in"
+                android:contentDescription="@string/zoom_in"
+                app:tint="@color/onSurface"/>
+
+            <ImageButton
+                android:id="@+id/btnZoomOut"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/round_button"
+                android:src="@drawable/ic_zoom_out"
+                android:contentDescription="@string/zoom_out"
+                app:tint="@color/onSurface"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/bottom_sheet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bottom_sheet_background"
+            android:orientation="vertical"
+            android:minHeight="500dp"
+            app:behavior_hideable="false"
+            app:behavior_peekHeight="50dp"
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+            <View
+                android:id="@+id/drag_handle"
+                android:layout_width="60dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/onBackground"
+                android:background="@drawable/ic_zoom_out" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="@string/route_options"
+                android:textColor="@color/onBackground"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/route_options"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never"
+                android:padding="8dp" />
+
+        </LinearLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <!-- Navigation Drawer -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
         android:fitsSystemWindows="true"
-        android:orientation="vertical">
+        android:background="?attr/colorSurface"
+        app:headerLayout="@layout/nav_header"
+        app:menu="@menu/drawer_menu"
+        app:itemIconTint="@color/nav_icon_color"
+        app:itemTextColor="@color/nav_icon_color"
+        />
 
-        <!-- Botón para centrar ubicación -->
-        <ImageButton
-            android:id="@+id/btnMyLocation"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/round_button"
-            android:src="@drawable/crosshairs_gps"
-            android:contentDescription="@string/center"
-            app:tint="@color/onSurface"/>
-
-        <ImageButton
-            android:id="@+id/btnZoomIn"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/round_button"
-            android:src="@drawable/ic_zoom_in"
-            android:contentDescription="@string/zoom_in"
-            app:tint="@color/onSurface"/>
-
-        <ImageButton
-            android:id="@+id/btnZoomOut"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/round_button"
-            android:src="@drawable/ic_zoom_out"
-            android:contentDescription="@string/zoom_out"
-            app:tint="@color/onSurface"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/bottom_sheet"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bottom_sheet_background"
-        android:orientation="vertical"
-        android:minHeight="500dp"
-        app:behavior_hideable="false"
-        app:behavior_peekHeight="50dp"
-        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
-
-        <View
-            android:id="@+id/drag_handle"
-            android:layout_width="60dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="8dp"
-            android:backgroundTint="@color/onBackground"
-            android:background="@drawable/ic_zoom_out" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:text="Opciones de Ruta"
-            android:textColor="@color/onBackground"/>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/route_options"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false"
-            android:overScrollMode="never"
-            android:padding="8dp" />
-
-    </LinearLayout>
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

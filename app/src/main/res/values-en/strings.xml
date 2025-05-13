@@ -32,7 +32,6 @@
     <string name="bike_parking">Bike parking</string>
     <string name="bus_stop">Bus stop</string>
     <string name="coords_format">Coords: %.5f, %.5f</string>
-    <string name="libraries">Public libraries</string>
     <string name="idioma">Language</string>
     <string name="route_options">Route options</string>
 </resources>
