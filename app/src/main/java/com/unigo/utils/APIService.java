@@ -1,6 +1,7 @@
 package com.unigo.utils;
 
 import com.google.gson.Gson;
+import com.unigo.models.GeoJsonLibrary;
 import com.unigo.models.GeoJsonParking;
 import com.unigo.models.GeoJsonStop;
 import com.unigo.models.NearStopResponse;
@@ -21,6 +22,17 @@ public class APIService {
     public APIService() {
         this.client = new OkHttpClient();
         this.gson = new Gson();
+    }
+
+    public GeoJsonLibrary getAllLibraries() throws IOException {
+        Request request = new Request.Builder()
+                .url("https://opendata.euskadi.eus/contenidos/ds_localizaciones/bibliotecas_publicas_euskadi/opendata/bibliotecas.geojson")  // Endpoint específico de parkings
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            String json = response.body().string();
+            return gson.fromJson(json, GeoJsonLibrary.class);
+        }
     }
 
     public GeoJsonParking getAllBikeParkings() throws IOException {
