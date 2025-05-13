@@ -34,4 +34,5 @@
     <string name="coords_format">Koordenatuak: %.5f, %.5f</string>
     <string name="idioma">Hizkuntza</string>
     <string name="route_options">Ibilbide aukerak</string>
+    <string name="public_libraries">Liburutegi publikoak</string>
 </resources>

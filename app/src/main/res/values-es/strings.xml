@@ -34,4 +34,5 @@
     <string name="coords_format">Coordenadas: %.5f, %.5f</string>
     <string name="idioma">Idioma</string>
     <string name="route_options">Opciones de ruta</string>
+    <string name="public_libraries">Librerías públicas</string>
 </resources>
