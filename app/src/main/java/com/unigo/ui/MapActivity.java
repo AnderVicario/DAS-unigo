@@ -650,34 +650,16 @@ public class MapActivity extends AppCompatActivity {
         }
 
         List<Double> coordinates = feature.geometry.coordinates;
-        double lon = coordinates.get(0);
-        double lat = coordinates.get(1);
-        GeoPoint point = new GeoPoint(lat, lon);
+        GeoPoint point = new GeoPoint(coordinates.get(1), coordinates.get(0));
 
         Marker marker = new Marker(map);
         marker.setPosition(point);
+        marker.setTitle(ContextCompat.getString(this, R.string.bus_stop));
         marker.setIcon(ContextCompat.getDrawable(this, R.drawable.bus_stop_marker));
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
 
-        // Manejo seguro de nulos
-        String stopName = "Parada desconocida";
-        String routesInfo = "No hay información de rutas";
-
-        if (feature.properties != null) {
-            stopName = (feature.properties.name != null) ?
-                    feature.properties.name : stopName;
-
-            if (feature.properties.routes != null && !feature.properties.routes.isEmpty()) {
-                routesInfo = String.join(", ", feature.properties.routes);
-            }
-        }
-
-        marker.setTitle(stopName);
-        marker.setSnippet("Rutas: " + routesInfo);
-
-        CustomInfoWindow infoWindow = new CustomInfoWindow(map, MarkerType.BUS_STOP);
-        marker.setInfoWindow(infoWindow);
-
+        marker.setRelatedObject(feature);
+        marker.setInfoWindow(new CustomInfoWindow(map, MarkerType.BUS_STOP));
         map.getOverlays().add(marker);
     }
 

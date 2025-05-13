@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="@drawable/round_dialog"
+    android:backgroundTint="@color/surface_50"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/onSurface"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:text="Parada de bus"/>
+
+    <TextView
+        android:id="@+id/tv_description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/onSurface"
+        android:textStyle="italic"
+        android:textSize="12sp"
+        android:text="Coords: 42.8395, -2.6703"/>
+
+    <TextView
+        android:id="@+id/tv_stop_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Calle Esperanza s/n"
+        android:textColor="@color/onSurface"
+        android:textSize="12sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/onSurface" />
+
+    <TextView
+        android:id="@+id/tv_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/onSurface"
+        android:textSize="12sp"
+        android:text="ID: #2011"/>
+
+</LinearLayout>

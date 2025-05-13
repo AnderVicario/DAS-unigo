@@ -7,6 +7,7 @@ import android.widget.TextView;
 
 import com.unigo.R;
 import com.unigo.models.GeoJsonParking;
+import com.unigo.models.GeoJsonStop;
 
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
@@ -28,7 +29,7 @@ public class CustomInfoWindow extends InfoWindow {
             case BIKE_PARKING:
                 return R.layout.bike_infoview;
             case BUS_STOP:
-                return R.layout.custom_infoview;
+                return R.layout.bus_infoview;
             default:
                 return R.layout.custom_infoview;
         }
@@ -76,11 +77,22 @@ public class CustomInfoWindow extends InfoWindow {
     }
 
     private void bindBusStopData(Marker marker, View view) {
-        TextView title = view.findViewById(R.id.info_title);
-        TextView snippet = view.findViewById(R.id.info_snippet);
+        TextView title = view.findViewById(R.id.tv_title);
+        TextView description = view.findViewById(R.id.tv_description);
+        TextView stop_name = view.findViewById(R.id.tv_stop_name);
+        TextView id = view.findViewById(R.id.tv_id);
 
         title.setText(marker.getTitle());
-        snippet.setText(marker.getSnippet());
+        description.setText(
+                view.getContext().getString(
+                        R.string.coords_format,
+                        marker.getPosition().getLatitude(),
+                        marker.getPosition().getLongitude()
+                )
+        );
+        GeoJsonStop.Feature data = (GeoJsonStop.Feature) marker.getRelatedObject();
+        stop_name.setText(data.getProperties().getStop_name());
+        id.setText(view.getContext().getString(R.string.bike_parking_id, Integer.toString(data.getProperties().getStop_id())));
     }
 
     private void bindDefaultData(Marker marker, View view) {
