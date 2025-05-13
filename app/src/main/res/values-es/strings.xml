@@ -26,4 +26,6 @@
     <string name="a_pie">A pie</string>
     <string name="autobus">Autobús</string>
     <string name="Bici">Bicicleta</string>
+    <string name="Bici_park">Parking de bicicletas</string>
+    <string name="bus_stops">Paradas de autobús</string>
 </resources>

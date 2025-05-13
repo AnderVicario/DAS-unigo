@@ -26,4 +26,6 @@
     <string name="a_pie">Oinez</string>
     <string name="autobus">Autobusez</string>
     <string name="Bici">Bizikletaz</string>
+    <string name="Bici_park">"Bizikleten aparkalekua "</string>
+    <string name="bus_stops">Autobus geltokiak</string>
 </resources>

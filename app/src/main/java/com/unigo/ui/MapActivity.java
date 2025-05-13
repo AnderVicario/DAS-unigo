@@ -919,7 +919,7 @@ public class MapActivity extends AppCompatActivity {
         marker.setIcon(ContextCompat.getDrawable(this, R.drawable.bike_parking_marker));
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
 
-        String title = "Parking de bicis";
+        String title = getString(R.string.Bici_park);
         String spots = (feature.properties != null) ? String.valueOf(feature.properties.sum) : "N/A";
         marker.setTitle(title);
         marker.setSnippet("Plazas: " + spots);
