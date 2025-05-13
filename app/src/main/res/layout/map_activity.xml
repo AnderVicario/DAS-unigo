@@ -235,6 +235,8 @@
         android:background="?attr/colorSurface"
         app:headerLayout="@layout/nav_header"
         app:menu="@menu/drawer_menu"
+        app:itemIconTint="@color/nav_icon_color"
+        app:itemTextColor="@color/nav_icon_color"
         />
 
 </androidx.drawerlayout.widget.DrawerLayout>
