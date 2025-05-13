@@ -26,6 +26,5 @@
     <string name="a_pie">By foot</string>
     <string name="autobus">Bus</string>
     <string name="Bici">Bike</string>
-    <string name="Bici_park">" Bicycle parking. "</string>
-    <string name="bus_stops">Bus stops</string>
+    <string name="bike_parking_id">ID: %1$s</string>
 </resources>

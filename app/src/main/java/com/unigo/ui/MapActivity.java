@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -42,6 +41,7 @@ import com.unigo.models.NearStopResponse;
 import com.unigo.models.Transport;
 import com.unigo.utils.APIService;
 import com.unigo.utils.CustomInfoWindow;
+import com.unigo.utils.MarkerType;
 import com.unigo.utils.RouteCalculator;
 import com.unigo.utils.SnackbarUtils;
 
@@ -456,16 +456,10 @@ public class MapActivity extends AppCompatActivity {
                 map
         );
 
-        Drawable arrowDrawable = ContextCompat.getDrawable(this, R.drawable.navigation);
-        if (arrowDrawable != null) {
-            arrowDrawable.setColorFilter(ContextCompat.getColor(this, R.color.onPrimary), PorterDuff.Mode.SRC_IN);
-            Bitmap arrowBitmap = drawableToBitmap(arrowDrawable);
-
-            // Asignar la flecha de movimiento al overlay
-            myLocationOverlay.setDirectionArrow(
-                    drawableToBitmap(ContextCompat.getDrawable(this, R.drawable.custom_location)),
-                    arrowBitmap
-            );
+        Drawable locationDrawable = ContextCompat.getDrawable(this, R.drawable.custom_location);
+        if (locationDrawable != null) {
+            Bitmap locationBitmap = drawableToBitmap(locationDrawable);
+            myLocationOverlay.setPersonIcon(locationBitmap);
         }
 
         myLocationOverlay.setPersonAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
@@ -508,7 +502,7 @@ public class MapActivity extends AppCompatActivity {
         currentMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         currentMarker.setTitle(getString(R.string.selected_marker));
 
-        CustomInfoWindow infoWindow = new CustomInfoWindow(map);
+        CustomInfoWindow infoWindow = new CustomInfoWindow(map, MarkerType.DEFAULT);
         currentMarker.setInfoWindow(infoWindow);
 
         map.getOverlays().add(currentMarker);
@@ -681,7 +675,7 @@ public class MapActivity extends AppCompatActivity {
         marker.setTitle(stopName);
         marker.setSnippet("Rutas: " + routesInfo);
 
-        CustomInfoWindow infoWindow = new CustomInfoWindow(map);
+        CustomInfoWindow infoWindow = new CustomInfoWindow(map, MarkerType.BUS_STOP);
         marker.setInfoWindow(infoWindow);
 
         map.getOverlays().add(marker);
@@ -720,7 +714,7 @@ public class MapActivity extends AppCompatActivity {
     private void updateVisualizationModeForBus(double currentZoom) {
         if (!showBusStops) return; // No hacer nada si están desactivadas
 
-        double DETAIL_ZOOM_THRESHOLD = 16.5;
+        double DETAIL_ZOOM_THRESHOLD = 18;
         boolean shouldBeDetailed = currentZoom >= DETAIL_ZOOM_THRESHOLD;
         if (shouldBeDetailed != inDetailedMode) {
             inDetailedMode = shouldBeDetailed;
@@ -838,7 +832,7 @@ public class MapActivity extends AppCompatActivity {
     private void updateVisualizationModeForBike(double currentZoom) {
         if (!showBikeParkings) return;
 
-        double DETAIL_ZOOM_THRESHOLD = 16.5;
+        double DETAIL_ZOOM_THRESHOLD = 18;
         boolean shouldBeDetailed = currentZoom >= DETAIL_ZOOM_THRESHOLD;
         if (shouldBeDetailed != inDetailedMode) {
             inDetailedMode = shouldBeDetailed;
@@ -881,7 +875,7 @@ public class MapActivity extends AppCompatActivity {
         prioritizedFeatures.addAll(inViewport);
         prioritizedFeatures.addAll(outOfViewport);
 
-        final int BATCH_SIZE = 10;
+        final int BATCH_SIZE = 5;
         final Handler handler = new Handler();
         final AtomicInteger counter = new AtomicInteger(0);
 
@@ -916,17 +910,12 @@ public class MapActivity extends AppCompatActivity {
 
         Marker marker = new Marker(map);
         marker.setPosition(point);
+        marker.setTitle("Parking de bicis");
         marker.setIcon(ContextCompat.getDrawable(this, R.drawable.bike_parking_marker));
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
 
-        String title = getString(R.string.Bici_park);
-        String spots = (feature.properties != null) ? String.valueOf(feature.properties.sum) : "N/A";
-        marker.setTitle(title);
-        marker.setSnippet("Plazas: " + spots);
-
-        CustomInfoWindow infoWindow = new CustomInfoWindow(map);
-        marker.setInfoWindow(infoWindow);
-
+        marker.setRelatedObject(feature);
+        marker.setInfoWindow(new CustomInfoWindow(map, MarkerType.BIKE_PARKING));
         map.getOverlays().add(marker);
     }
 }
