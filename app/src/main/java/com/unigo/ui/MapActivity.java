@@ -58,6 +58,7 @@ import com.unigo.utils.LocaleHelper;
 import com.unigo.utils.MarkerType;
 import com.unigo.utils.RouteCalculator;
 import com.unigo.utils.SnackbarUtils;
+import com.unigo.utils.TranslatorUtil;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -78,8 +79,11 @@ import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -148,8 +152,10 @@ public class MapActivity extends AppCompatActivity {
         configureRecyclerView();
         configureHorizontalScrollView();
         View header = navigationView.getHeaderView(0);
-        TextView tvTemp      = header.findViewById(R.id.nav_temp);
-        TextView tvHumidity  = header.findViewById(R.id.nav_humidity);
+        TextView tvTemp = header.findViewById(R.id.nav_temp);
+        TextView tvHumidity = header.findViewById(R.id.nav_humidity);
+        TextView tvMeteoDesc = header.findViewById(R.id.nav_meteo_desc);
+        fetchMeteo(tvMeteoDesc);
 
         fetchWeather(tvTemp, tvHumidity);
 
@@ -1397,6 +1403,104 @@ public class MapActivity extends AppCompatActivity {
 
             } catch (Exception e) {
                 e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void fetchMeteo(TextView tvMeteoDesc) {
+        new Thread(() -> {
+            try {
+                // 1. Conexión HTTP al XML
+                URL url = new URL("https://opendata.euskadi.eus/contenidos/prevision_tiempo/" +
+                        "met_forecast/opendata/met_forecast.xml");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.connect();
+                InputStream in = conn.getInputStream();
+
+                // 2. Preparamos XmlPullParser
+                XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+                factory.setNamespaceAware(true);
+                XmlPullParser parser = factory.newPullParser();
+                parser.setInput(in, null);
+
+                // 3. Variables de control
+                boolean inTodayForecast = false;
+                boolean inTargetCity     = false;
+                boolean inEs              = false;
+                boolean inEu              = false;
+                String descEs             = null;
+                String descEu             = null;
+
+                // 4. Recorremos el documento
+                int eventType = parser.getEventType();
+                while (eventType != XmlPullParser.END_DOCUMENT) {
+                    String tag = parser.getName();
+                    switch (eventType) {
+                        case XmlPullParser.START_TAG:
+                            if ("forecast".equals(tag)) {
+                                // comprobar si son los datos de "hoy"
+                                String day = parser.getAttributeValue(null, "forecastDay");
+                                inTodayForecast = "today".equals(day);
+                            } else if (inTodayForecast && "cityForecastData".equals(tag)) {
+                                // comprobar si es Vitoria-Gasteiz
+                                String city = parser.getAttributeValue(null, "cityName");
+                                inTargetCity = "Vitoria-Gasteiz".equals(city);
+                            } else if (inTodayForecast && inTargetCity && "es".equals(tag)) {
+                                inEs = true;
+                            } else if (inTodayForecast && inTargetCity && "eu".equals(tag)) {
+                                inEu = true;
+                            }
+                            break;
+
+                        case XmlPullParser.TEXT:
+                            if (inTodayForecast && inTargetCity && inEs) {
+                                descEs = parser.getText().trim();
+                            } else if (inTodayForecast && inTargetCity && inEu) {
+                                descEu = parser.getText().trim();
+                            }
+                            break;
+
+                        case XmlPullParser.END_TAG:
+                            if ("cityForecastData".equals(tag) && inTargetCity) {
+                                // hemos terminado de leer la ciudad en "hoy"
+                                eventType = XmlPullParser.END_DOCUMENT; // salimos
+                            } else if ("es".equals(tag)) {
+                                inEs = false;
+                            } else if ("eu".equals(tag)) {
+                                inEu = false;
+                            } else if ("forecast".equals(tag) && inTodayForecast) {
+                                // salimos si llegamos al fin del bloque "hoy" sin encontrar la ciudad
+                                inTodayForecast = false;
+                            }
+                            break;
+                    }
+                    eventType = parser.next();
+                }
+
+                in.close();
+                conn.disconnect();
+
+                // 5. Mostrar en UI (fallback a guión si no existe)
+                final String outEs = descEs != null ? descEs : "—";
+                final String outEu = descEu != null ? descEu : "—";
+                runOnUiThread(() -> {
+                    SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+                    String idioma = prefs.getString("idioma", Locale.getDefault().getLanguage());
+                    // Elegimos el origen
+                    String textoOrigen = "eu".equals(idioma) ? outEu : outEs;
+
+                    // Usamos TranslatorUtil para traducir si es inglés (OpenData solo devuelve estos datos en español y euskera, por lo tanto se utiliza una traducción externa)
+                    TranslatorUtil.translateIfNeeded(
+                            textoOrigen,
+                            idioma,
+                            translated -> runOnUiThread(() -> tvMeteoDesc.setText(translated))
+                    );
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> tvMeteoDesc.setText(getString(R.string.no_data)));
             }
         }).start();
     }
