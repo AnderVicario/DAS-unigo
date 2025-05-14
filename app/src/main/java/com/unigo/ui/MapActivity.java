@@ -23,6 +23,7 @@ import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -57,6 +58,8 @@ import com.unigo.utils.MarkerType;
 import com.unigo.utils.RouteCalculator;
 import com.unigo.utils.SnackbarUtils;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.events.MapListener;
@@ -75,10 +78,21 @@ import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MapActivity extends AppCompatActivity {
@@ -132,6 +146,11 @@ public class MapActivity extends AppCompatActivity {
         configureBottomSheet();
         configureRecyclerView();
         configureHorizontalScrollView();
+        View header = navigationView.getHeaderView(0);
+        TextView tvTemp      = header.findViewById(R.id.nav_temp);
+        TextView tvHumidity  = header.findViewById(R.id.nav_humidity);
+
+        fetchWeather(tvTemp, tvHumidity);
 
         // Permisos
         requestLocationPermission();
@@ -1191,5 +1210,121 @@ public class MapActivity extends AppCompatActivity {
         LocaleHelper.setLocale(this, idioma);
     }
 
+    private void fetchWeather(TextView tvTemp, TextView tvHumidity) {
+        new Thread(() -> {
+            try {
+                // 1. Hora actual UTC truncada
+                Instant nowHour = Instant.now()
+                        .truncatedTo(ChronoUnit.HOURS);
+
+                // 2. Construimos la URL
+                String from = URLEncoder.encode(
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
+                                .withZone(ZoneOffset.UTC)
+                                .format(nowHour.minus(24, ChronoUnit.HOURS)),
+                        "UTF-8"
+                );
+                String to = URLEncoder.encode(
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
+                                .withZone(ZoneOffset.UTC)
+                                .format(nowHour),
+                        "UTF-8"
+                );
+                String urlString = String.format(
+                        "https://api.euskadi.eus/air-quality/measurements/hourly/"
+                                + "stations/85/from/%s/to/%s?lang=SPANISH",
+                        from, to
+                );
+
+                // 3. Petición HTTP
+                URL url = new URL(urlString);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.connect();
+                String json = new Scanner(conn.getInputStream())
+                        .useDelimiter("\\A")
+                        .next();
+                conn.disconnect();
+
+                // 4. Parseo JSON
+                JSONObject root = new JSONObject("{\"data\":" + json + "}");
+                JSONArray  arr  = root.getJSONArray("data");
+                if (arr.length() == 0) throw new IllegalStateException("Sin datos");
+
+                // 5. Buscamos el registro con date más cercano a nowHour, diff ≤ 3h
+                DateTimeFormatter isoFmt = DateTimeFormatter
+                        .ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                        .withZone(ZoneOffset.UTC);
+
+                JSONObject bestRecord = null;
+                long bestDiffHours = Long.MAX_VALUE;
+
+                for (int i = 0; i < arr.length(); i++) {
+                    String dateStr = arr.getJSONObject(i).getString("date");
+                    Instant recInst = Instant.from(isoFmt.parse(dateStr));
+                    long diffHours = Math.abs(ChronoUnit.HOURS.between(recInst, nowHour));
+
+                    if (diffHours < bestDiffHours) {
+                        bestDiffHours = diffHours;
+                        bestRecord    = arr.getJSONObject(i);
+                    }
+                }
+
+                // Si ni el más cercano está a ≤ 3 horas, fallback al primero
+                if (bestRecord == null || bestDiffHours > 3) {
+                    bestRecord = arr.getJSONObject(0);
+                }
+
+                // 6. Extraemos temperatura y humedad
+                JSONArray measurements = bestRecord
+                        .getJSONArray("station")
+                        .getJSONObject(0)
+                        .getJSONArray("measurements");
+
+                String temp = "--", hum = "--";
+                for (int j = 0; j < measurements.length(); j++) {
+                    JSONObject m = measurements.getJSONObject(j);
+                    String name = m.getString("name");
+                    double val  = m.getDouble("value");
+                    // 1) Solo asignar si val != 0
+                    if (val == 0.0) continue;
+
+                    switch (name) {
+                        case "Tº":
+                            // primera temperatura válida
+                            if ("--".equals(temp)) {
+                                temp = String.valueOf(val);
+                            }
+                            break;
+                        case "H":
+                            // primera humedad válida
+                            if ("--".equals(hum)) {
+                                hum = String.valueOf(val);
+                            }
+                            break;
+                    }
+                    // 2) Si ya tienes ambos, sales del bucle
+                    if (!"--".equals(temp) && !"--".equals(hum)) break;
+                }
+
+                // 7. Variables finales para el lambda
+                final String displayTemp = temp;
+                final String displayHum  = hum;
+
+                // 8. Actualizar UI
+                runOnUiThread(() -> {
+                    tvTemp.setText(
+                            String.format(Locale.getDefault(), "Tº: %sºC", displayTemp)
+                    );
+                    tvHumidity.setText(
+                            String.format(Locale.getDefault(), "H: %s%%", displayHum)
+                    );
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 
 }

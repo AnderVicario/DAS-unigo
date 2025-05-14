@@ -43,4 +43,5 @@
     <string name="summer_schedule">Udako ordutegia</string>
     <string name="address">Helbidea</string>
     <string name="close">Itxi</string>
+    <string name="no_data">Ez dago informazio eskuragarri</string>
 </resources>
