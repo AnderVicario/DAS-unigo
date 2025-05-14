@@ -51,6 +51,7 @@ import com.unigo.models.api.GeoJsonParking;
 import com.unigo.models.api.GeoJsonStop;
 import com.unigo.models.api.NearStopResponse;
 import com.unigo.models.Transport;
+import com.unigo.models.api.TransfersResponse;
 import com.unigo.utils.APIService;
 import com.unigo.utils.CustomInfoWindow;
 import com.unigo.utils.LocaleHelper;
@@ -91,6 +92,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MapActivity extends AppCompatActivity {
@@ -527,6 +530,16 @@ public class MapActivity extends AppCompatActivity {
     // ----------------------
 
     private void setupLocationOverlay() {
+        Marker marker = new Marker(map);
+        marker.setPosition(FIXED_DESTINATION);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        marker.setTitle("Universidad de Vitoria-Gazteiz");
+        marker.setSubDescription("Universidad de Vitoria-Gazteiz");
+        marker.setIcon(ContextCompat.getDrawable(this, R.drawable.destination_marker));
+
+        marker.setInfoWindow(new CustomInfoWindow(map, MarkerType.LIBRARY));
+        map.getOverlays().add(marker);
+
         myLocationOverlay = new MyLocationNewOverlay(
                 new GpsMyLocationProvider(getApplicationContext()),
                 map
@@ -534,8 +547,10 @@ public class MapActivity extends AppCompatActivity {
 
         Drawable arrowDrawable = ContextCompat.getDrawable(this, R.drawable.navigation);
         if (arrowDrawable != null) {
-            arrowDrawable.setColorFilter(ContextCompat.getColor(this, R.color.onPrimary), PorterDuff.Mode.SRC_IN);
             Bitmap arrowBitmap = drawableToBitmap(arrowDrawable);
+            int width = (int) (arrowBitmap.getWidth() * 0.9);
+            int height = (int) (arrowBitmap.getHeight() * 0.9);
+            arrowBitmap = Bitmap.createScaledBitmap(arrowBitmap, width, height, true);
 
             // Asignar la flecha de movimiento al overlay
             myLocationOverlay.setDirectionArrow(
@@ -650,33 +665,108 @@ public class MapActivity extends AppCompatActivity {
         transportOptions.clear();
         GeoPoint start = myLocationOverlay.getMyLocation();
 
+        // Usamos un executor con pool de hilos para manejar las diferentes solicitudes
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
         for (String profile : PROFILE_PORT_MAP.keySet()) {
-            routeCalculator.calculateRoute(profile, start, destination, new RouteCalculator.RouteCallback() {
-                @Override
-                public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
-                    String modeName = "";
-                    switch(profile) {
-                        case "foot": modeName = "A pie"; break;
-                        case "car": modeName = "Autobús"; break;
-                        case "bike": modeName = "Bicicleta"; break;
+            executor.execute(() -> {
+                try {
+                    if ("car".equals(profile)) {
+                        // Lógica específica para autobuses
+                        APIService apiService = new APIService();
+
+                        GeoJsonStop stops = apiService.getAllStops();
+
+                        // 1. Buscar parada más cercana
+                        NearStopResponse nearStop = apiService.findNearStop(
+                                start.getLatitude(),
+                                start.getLongitude(),
+                                400
+                        );
+
+                        String originStop = nearStop.getStop_name();
+                        GeoPoint busOrigin = stops.findStopByName(originStop);
+
+                        if (nearStop == null || originStop == null) {
+                            Log.d(TAG, "No se encontraron paradas cercanas");
+                            return;
+                        }
+
+                        // 2. Obtener transferencias desde la parada
+                        TransfersResponse transfers = apiService.getSmartTransfers(originStop);
+                        if (transfers == null) {
+                            Log.d(TAG, "No se encontraron transferencias");
+                            return;
+                        }
+
+                        for (TransfersResponse.DirectRoute directRoute : transfers.getDirectRoutes()) {
+                            String route = directRoute.getRoute();
+                            String routeName = directRoute.getRouteName();
+                            String finalStop = directRoute.getFinalStop();
+                            GeoPoint busDestination = stops.findStopByName(finalStop);
+
+                            routeCalculator.calculateRoute("car", busOrigin, busDestination, new RouteCalculator.RouteCallback() {
+                                @Override
+                                public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
+                                    Transport busTransport = new Transport(
+                                            "Autobús",
+                                            distanceKm,
+                                            durationMinutes,
+                                            points
+                                    );
+
+                                    transportOptions.add(busTransport);
+                                    runOnUiThread(() -> adapter.notifyDataSetChanged());
+
+                                }
+
+                                @Override
+                                public void onRouteError(String message) {
+                                    Log.e(TAG, "Error en ruta a pie: " + message);
+                                }
+                            });
+                        }
+
+                        for (TransfersResponse.TransferAlternative transfer : transfers.getTransferAlternatives()) {
+                            return;
+                        }
+
+                    } else {
+                        // Lógica para otros modos de transporte (pie, bicicleta)
+                        routeCalculator.calculateRoute(profile, start, destination, new RouteCalculator.RouteCallback() {
+                            @Override
+                            public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
+                                String modeName = "";
+                                switch(profile) {
+                                    case "foot": modeName = "A pie"; break;
+                                    case "bike": modeName = "Bicicleta"; break;
+                                }
+
+                                transportOptions.add(new Transport(
+                                        modeName,
+                                        distanceKm,
+                                        durationMinutes,
+                                        points
+                                ));
+
+                                runOnUiThread(() -> adapter.notifyDataSetChanged());
+                            }
+
+                            @Override
+                            public void onRouteError(String message) {
+                                Log.e(TAG, "Error en perfil " + profile + ": " + message);
+                            }
+                        });
                     }
-
-                    transportOptions.add(new Transport(
-                            modeName,
-                            distanceKm,
-                            durationMinutes,
-                            points
-                    ));
-
-                    runOnUiThread(() -> adapter.notifyDataSetChanged());
-                }
-
-                @Override
-                public void onRouteError(String message) {
-                    Log.e(TAG, "Error en perfil " + profile + ": " + message);
+                } catch (IOException e) {
+                    Log.e(TAG, "Error en API: " + e.getMessage());
+                } catch (Exception e) {
+                    Log.e(TAG, "Error general: " + e.getMessage());
                 }
             });
         }
+
+        executor.shutdown(); // Asegurar que se liberen los recursos
     }
 
     // ----------------------

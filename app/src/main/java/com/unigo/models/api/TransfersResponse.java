@@ -8,7 +8,7 @@ public class TransfersResponse {
     private String originStop;
 
     @SerializedName("direct_routes")
-    private List<String> directRoutes;
+    private List<DirectRoute> directRoutes;
 
     @SerializedName("transfer_alternatives")
     private List<TransferAlternative> transferAlternatives;
@@ -18,7 +18,7 @@ public class TransfersResponse {
         return originStop;
     }
 
-    public List<String> getDirectRoutes() {
+    public List<DirectRoute> getDirectRoutes() {
         return directRoutes;
     }
 
@@ -75,6 +75,35 @@ public class TransfersResponse {
 
         public double getTotalCost() {
             return totalCost;
+        }
+    }
+
+    public class DirectRoute {
+        private String route;
+
+        @SerializedName("route_name")
+        private String routeName;
+
+        @SerializedName("final_stop")
+        private String finalStop;;
+
+        @SerializedName("distance_to_campus_m")
+        private int distanceToCampusM;
+
+        public String getRoute() {
+            return route;
+        }
+
+        public String getRouteName() {
+            return routeName;
+        }
+
+        public String getFinalStop() {
+            return finalStop;
+        }
+
+        public int getDistanceToCampusM() {
+            return distanceToCampusM;
         }
     }
 }

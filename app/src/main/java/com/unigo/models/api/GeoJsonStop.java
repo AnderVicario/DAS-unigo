@@ -1,5 +1,7 @@
 package com.unigo.models.api;
 
+import org.osmdroid.util.GeoPoint;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,5 +35,14 @@ public class GeoJsonStop {
         public String getStop_name() {
             return stop_name;
         }
+    }
+
+    public GeoPoint findStopByName (String stopName) {
+        for (Feature feature : features) {
+            if (feature.properties.getStop_name().equals(stopName)) {
+                return new GeoPoint(feature.geometry.coordinates.get(1), feature.geometry.coordinates.get(0));
+            }
+        }
+        return null;
     }
 }
