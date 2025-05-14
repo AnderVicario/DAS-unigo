@@ -46,10 +46,10 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.navigation.NavigationView;
 import com.unigo.R;
 import com.unigo.adapters.TransportAdapter;
-import com.unigo.models.GeoJsonLibrary;
-import com.unigo.models.GeoJsonParking;
-import com.unigo.models.GeoJsonStop;
-import com.unigo.models.NearStopResponse;
+import com.unigo.models.api.GeoJsonLibrary;
+import com.unigo.models.api.GeoJsonParking;
+import com.unigo.models.api.GeoJsonStop;
+import com.unigo.models.api.NearStopResponse;
 import com.unigo.models.Transport;
 import com.unigo.utils.APIService;
 import com.unigo.utils.CustomInfoWindow;
@@ -78,9 +78,7 @@ import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -556,20 +554,6 @@ public class MapActivity extends AppCompatActivity {
 
                 // Recalcular rutas cuando se obtiene la ubicación
                 calculateAllRoutes(FIXED_DESTINATION);
-
-                // Se ejecuta en un hilo porque las operaciones de red no pueden ir en el hilo principal
-                APIService api = new APIService();
-                new Thread(() -> {
-                    try {
-                        NearStopResponse res = api.findNearStop(myLocationOverlay.getMyLocation().getLatitude(), myLocationOverlay.getMyLocation().getLongitude(), 300);
-                        Log.i(TAG, "Parada: " + res.stop_name);
-                        Log.i(TAG, "Distancia: " + res.distance_m + "m");
-                        Log.i(TAG, "Rutas: " + String.join(", ", res.routes));
-                        Log.i(TAG, "¿Universidad?: " + res.is_university_route);
-                    } catch (IOException e) {
-                        Log.e(TAG, "Error al consultar la API", e);
-                    }
-                }).start();
             }
         }));
 

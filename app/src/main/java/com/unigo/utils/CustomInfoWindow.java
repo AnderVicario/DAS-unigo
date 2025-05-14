@@ -1,16 +1,14 @@
 package com.unigo.utils;
 
-import static android.provider.Settings.System.getString;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.unigo.R;
-import com.unigo.models.GeoJsonLibrary;
-import com.unigo.models.GeoJsonParking;
-import com.unigo.models.GeoJsonStop;
+import com.unigo.models.api.GeoJsonLibrary;
+import com.unigo.models.api.GeoJsonParking;
+import com.unigo.models.api.GeoJsonStop;
 
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
@@ -211,8 +209,6 @@ public class CustomInfoWindow extends InfoWindow {
     }
 
     @Override
-    public void onClose() {
-        // Limpieza opcional
-    }
+    public void onClose() {}
 }
 

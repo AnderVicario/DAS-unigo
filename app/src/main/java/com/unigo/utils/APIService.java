@@ -1,10 +1,11 @@
 package com.unigo.utils;
 
 import com.google.gson.Gson;
-import com.unigo.models.GeoJsonLibrary;
-import com.unigo.models.GeoJsonParking;
-import com.unigo.models.GeoJsonStop;
-import com.unigo.models.NearStopResponse;
+import com.unigo.models.api.GeoJsonLibrary;
+import com.unigo.models.api.GeoJsonParking;
+import com.unigo.models.api.GeoJsonStop;
+import com.unigo.models.api.NearStopResponse;
+import com.unigo.models.api.TransfersResponse;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -67,14 +68,15 @@ public class APIService {
         }
     }
 
-    public String getSmartTransfers(String originStopName) throws IOException {
+    public TransfersResponse getSmartTransfers(String originStopName) throws IOException {
         String encodedStopName = originStopName.replace(" ", "%20");
         String url = BASE_URL + "/transfers?origin_stop_name=" + encodedStopName;
 
         Request request = new Request.Builder().url(url).build();
 
         try (Response response = client.newCall(request).execute()) {
-            return response.body().string();
+            String json = response.body().string();
+            return gson.fromJson(json, TransfersResponse.class);
         }
     }
 }

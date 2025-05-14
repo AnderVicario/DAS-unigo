@@ -46,12 +46,10 @@
                     android:id="@+id/iv_logo"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_gravity="center"
                     android:contentDescription="@string/logo_description"
+                    android:paddingStart="-24dp"
                     android:padding="6dp"
-                    app:srcCompat="@drawable/logo_light"
-                    tools:layout_editor_absoluteX="213dp"
-                    tools:layout_editor_absoluteY="16dp" />
+                    app:srcCompat="@drawable/logo_light"/>
 
             </androidx.appcompat.widget.Toolbar>
 

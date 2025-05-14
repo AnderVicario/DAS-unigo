@@ -1,4 +1,4 @@
-package com.unigo.models;
+package com.unigo.models.api;
 
 import java.util.List;
 
