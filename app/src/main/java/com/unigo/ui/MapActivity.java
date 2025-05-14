@@ -1213,7 +1213,7 @@ public class MapActivity extends AppCompatActivity {
                                 .withZone(ZoneOffset.UTC)
                                 .format(nowHour.minus(1, ChronoUnit.HOURS)),
                         "UTF-8"
-                ); // Se aplica -1 hora porque la api va con retraso o no lleva el mismo formato horario español
+                ); // Se aplica -1 hora porque la api va con horario UTC
                 String urlString = String.format(
                         "https://api.euskadi.eus/air-quality/measurements/hourly/"
                                 + "stations/85/from/%s/to/%s?lang=SPANISH",
