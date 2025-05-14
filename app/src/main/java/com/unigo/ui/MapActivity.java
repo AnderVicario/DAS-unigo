@@ -1205,15 +1205,15 @@ public class MapActivity extends AppCompatActivity {
                 String from = URLEncoder.encode(
                         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
                                 .withZone(ZoneOffset.UTC)
-                                .format(nowHour.minus(24, ChronoUnit.HOURS)),
+                                .format(nowHour.minus(12, ChronoUnit.HOURS)),
                         "UTF-8"
-                );
+                ); // Se acota la cantidad de datos filtrando a los datos de las ultimas 12 horas
                 String to = URLEncoder.encode(
                         DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
                                 .withZone(ZoneOffset.UTC)
-                                .format(nowHour),
+                                .format(nowHour.minus(1, ChronoUnit.HOURS)),
                         "UTF-8"
-                );
+                ); // Se aplica -1 hora porque la api va con retraso o no lleva el mismo formato horario español
                 String urlString = String.format(
                         "https://api.euskadi.eus/air-quality/measurements/hourly/"
                                 + "stations/85/from/%s/to/%s?lang=SPANISH",
