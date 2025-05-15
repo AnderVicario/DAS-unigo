@@ -1401,8 +1401,9 @@ public class MapActivity extends AppCompatActivity {
         else if ("dark".equals(mode)) nightMode = AppCompatDelegate.MODE_NIGHT_YES;
         AppCompatDelegate.setDefaultNightMode(nightMode);
 
-        // 3) Recrear para que cambien estilos UI
-        applyMapMode("auto");
+        // 3) Recrear para que cambien estilos UI (si estaba en auto hay que recrearlo (con el nuevo tema))
+        String mapaMode = prefs.getString("mapa", "auto");
+        applyMapMode(mapaMode);
     }
 
 
