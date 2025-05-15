@@ -44,4 +44,7 @@
     <string name="summer_schedule">Summer schedule</string>
     <string name="address">Adress</string>
     <string name="close">Close</string>
+    <string name="resumen">Weather summary</string>
+    <string name="icon">Icon</string>
+    <string name="mediciones">Measurements</string>
 </resources>

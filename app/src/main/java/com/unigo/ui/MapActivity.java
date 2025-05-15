@@ -58,6 +58,7 @@ import com.unigo.utils.LocaleHelper;
 import com.unigo.utils.MarkerType;
 import com.unigo.utils.RouteCalculator;
 import com.unigo.utils.SnackbarUtils;
+import com.unigo.utils.SvgUtil;
 import com.unigo.utils.TranslatorUtil;
 
 import org.json.JSONArray;
@@ -99,6 +100,8 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MapActivity extends AppCompatActivity {
 
@@ -155,7 +158,8 @@ public class MapActivity extends AppCompatActivity {
         TextView tvTemp = header.findViewById(R.id.nav_temp);
         TextView tvHumidity = header.findViewById(R.id.nav_humidity);
         TextView tvMeteoDesc = header.findViewById(R.id.nav_meteo_desc);
-        fetchMeteo(tvMeteoDesc);
+        ImageView ivIcon = header.findViewById(R.id.nav_weather_icon);
+        fetchMeteo(tvMeteoDesc, ivIcon);
 
         fetchWeather(tvTemp, tvHumidity);
 
@@ -1407,7 +1411,7 @@ public class MapActivity extends AppCompatActivity {
         }).start();
     }
 
-    private void fetchMeteo(TextView tvMeteoDesc) {
+    private void fetchMeteo(TextView tvMeteoDesc, ImageView ivIcon) {
         new Thread(() -> {
             try {
                 // 1. Conexión HTTP al XML
@@ -1426,11 +1430,13 @@ public class MapActivity extends AppCompatActivity {
 
                 // 3. Variables de control
                 boolean inTodayForecast = false;
-                boolean inTargetCity     = false;
-                boolean inEs              = false;
-                boolean inEu              = false;
-                String descEs             = null;
-                String descEu             = null;
+                boolean inTargetCity = false;
+                boolean inEs = false;
+                boolean inEu = false;
+                String descEs = null;
+                String descEu = null;
+                boolean inSymbolImage = false;
+                String iconPath = null;
 
                 // 4. Recorremos el documento
                 int eventType = parser.getEventType();
@@ -1439,17 +1445,17 @@ public class MapActivity extends AppCompatActivity {
                     switch (eventType) {
                         case XmlPullParser.START_TAG:
                             if ("forecast".equals(tag)) {
-                                // comprobar si son los datos de "hoy"
                                 String day = parser.getAttributeValue(null, "forecastDay");
                                 inTodayForecast = "today".equals(day);
                             } else if (inTodayForecast && "cityForecastData".equals(tag)) {
-                                // comprobar si es Vitoria-Gasteiz
                                 String city = parser.getAttributeValue(null, "cityName");
                                 inTargetCity = "Vitoria-Gasteiz".equals(city);
                             } else if (inTodayForecast && inTargetCity && "es".equals(tag)) {
                                 inEs = true;
                             } else if (inTodayForecast && inTargetCity && "eu".equals(tag)) {
                                 inEu = true;
+                            } else if (inTodayForecast && inTargetCity && "symbolImage".equals(tag)) {
+                                inSymbolImage = true;
                             }
                             break;
 
@@ -1458,19 +1464,21 @@ public class MapActivity extends AppCompatActivity {
                                 descEs = parser.getText().trim();
                             } else if (inTodayForecast && inTargetCity && inEu) {
                                 descEu = parser.getText().trim();
+                            } else if (inSymbolImage && iconPath == null) {
+                                iconPath = parser.getText().trim();
                             }
                             break;
 
                         case XmlPullParser.END_TAG:
-                            if ("cityForecastData".equals(tag) && inTargetCity) {
-                                // hemos terminado de leer la ciudad en "hoy"
-                                eventType = XmlPullParser.END_DOCUMENT; // salimos
+                            if ("symbolImage".equals(tag)) {
+                                inSymbolImage = false;
+                            } else if ("cityForecastData".equals(tag) && inTargetCity) {
+                                eventType = XmlPullParser.END_DOCUMENT;
                             } else if ("es".equals(tag)) {
                                 inEs = false;
                             } else if ("eu".equals(tag)) {
                                 inEu = false;
                             } else if ("forecast".equals(tag) && inTodayForecast) {
-                                // salimos si llegamos al fin del bloque "hoy" sin encontrar la ciudad
                                 inTodayForecast = false;
                             }
                             break;
@@ -1484,7 +1492,23 @@ public class MapActivity extends AppCompatActivity {
                 // 5. Mostrar en UI (fallback a guión si no existe)
                 final String outEs = descEs != null ? descEs : "—";
                 final String outEu = descEu != null ? descEu : "—";
+                String svgUrl = null;
+                if (iconPath != null) {
+                    // ejemplo iconPath = "/.../images/14.gif"
+                    Matcher m = Pattern.compile("(\\d+)\\.gif$").matcher(iconPath);
+                    if (m.find()) {
+                        String num = m.group(1);
+                        svgUrl = "https://www.euskalmet.euskadi.eus/media/assets/icons/euskalmet/" +
+                                "webmet00-i" + num + "d.svg";
+                    }
+                }
+                final String iconUrl = svgUrl;
                 runOnUiThread(() -> {
+                    // 5a. Cargamos icono si lo tenemos
+                    if (iconUrl != null) {
+                        SvgUtil.loadSvgIntoImageView(MapActivity.this, iconUrl, ivIcon);
+                    }
+                    // 5b. Texto según preferencia e idioma
                     SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
                     String idioma = prefs.getString("idioma", Locale.getDefault().getLanguage());
                     // Elegimos el origen

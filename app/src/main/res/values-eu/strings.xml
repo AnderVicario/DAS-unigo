@@ -44,4 +44,7 @@
     <string name="address">Helbidea</string>
     <string name="close">Itxi</string>
     <string name="no_data">Ez dago informazio eskuragarri</string>
+    <string name="resumen">Eguraldi informazioa</string>
+    <string name="icon">Ikonoa</string>
+    <string name="mediciones">Neurketak</string>
 </resources>

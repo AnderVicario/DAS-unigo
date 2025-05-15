@@ -44,4 +44,7 @@
     <string name="address">Dirección</string>
     <string name="close">Cerrar</string>
     <string name="no_data">No hay datos disponibles</string>
+    <string name="resumen">Resumen meterológico</string>
+    <string name="icon">Icono</string>
+    <string name="mediciones">Mediciones</string>
 </resources>
