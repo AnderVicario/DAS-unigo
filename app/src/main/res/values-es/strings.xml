@@ -47,4 +47,9 @@
     <string name="resumen">Resumen meterológico</string>
     <string name="icon">Icono</string>
     <string name="mediciones">Mediciones</string>
+    <string name="map">Cambiar mapa</string>
+    <string name="Minimalista">Minimalista</string>
+    <string name="Detallado">Detallado</string>
+    <string name="Satelite">Satélite</string>
+    <string name="Tema">Tema</string>
 </resources>

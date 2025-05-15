@@ -47,4 +47,9 @@
     <string name="resumen">Weather summary</string>
     <string name="icon">Icon</string>
     <string name="mediciones">Measurements</string>
+    <string name="map">Change map</string>
+    <string name="Minimalista">Minimalist</string>
+    <string name="Detallado">Detailed</string>
+    <string name="Satelite">Satellite</string>
+    <string name="Tema">Theme</string>
 </resources>

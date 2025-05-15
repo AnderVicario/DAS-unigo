@@ -11,7 +11,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -211,12 +210,12 @@ public class MapActivity extends AppCompatActivity {
         ImageView ivLogo = findViewById(R.id.iv_logo);
         int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
         if (currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
-            initializeMap("dark");
+
             ivLogo.setImageResource(R.drawable.logo_dark);
         } else {
-            initializeMap("light");
             ivLogo.setImageResource(R.drawable.logo_light);
         }
+        initializeMap();
     }
 
     private void configureControls() {
@@ -432,6 +431,9 @@ public class MapActivity extends AppCompatActivity {
             if (id == R.id.nav_idioma) {
                 dialogoIdioma();
             }
+            else if (id == R.id.nav_mapa) {
+                mostrarOpcionesMapa();
+            }
             // Cerrar el drawer tras la selección
             drawerLayout.closeDrawer(GravityCompat.START);
             return true;
@@ -443,7 +445,28 @@ public class MapActivity extends AppCompatActivity {
     // Configuración del MAPA
     // --------------------
 
-    private void initializeMap(String mode) {
+    private void initializeMap() {
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        // Si no hay modo guardado, usar light/dark por defecto:
+        String defaultMode = isNightMode() ? "dark" : "light";
+        String mode = prefs.getString("mapa", defaultMode);
+        applyMapMode(mode);
+    }
+
+    // Helper para saber si estamos en tema nocturno:
+    private boolean isNightMode() {
+        int uiMode = getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return uiMode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    private void applyMapMode(String mode) {
+        // // Guardar la elección
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        prefs.edit()
+                .putString("mapa", mode)
+                .apply();
+
         Configuration.getInstance().load(getApplicationContext(), getPreferences(MODE_PRIVATE));
         map = findViewById(R.id.map);
 
@@ -460,7 +483,7 @@ public class MapActivity extends AppCompatActivity {
                             MapTileIndex.getY(pMapTileIndex) + "@2x.png";
                 }
             });
-        } else {
+        } else if (Objects.equals(mode, "dark")) {
             map.setTileSource(new XYTileSource("CartoDark", 0, 20, 512, ".png",
                     new String[] {
                             "https://a.basemaps.cartocdn.com/dark_all/",
@@ -473,10 +496,53 @@ public class MapActivity extends AppCompatActivity {
                             MapTileIndex.getY(pMapTileIndex) + "@2x.png";
                 }
             });
+        } else if (Objects.equals(mode, "mapnik")) {
+            // Modo "Mapnik" (OSM clásico)
+            map.setTileSource(new XYTileSource("Mapnik", 0, 19, 256, ".png",
+                    new String[]{
+                            "https://tile.openstreetmap.org/"
+                    }) {
+                @Override
+                public String getTileURLString(long pMapTileIndex) {
+                    int z = MapTileIndex.getZoom(pMapTileIndex);
+                    int x = MapTileIndex.getX(pMapTileIndex);
+                    int y = MapTileIndex.getY(pMapTileIndex);
+                    return getBaseUrl() + z + "/" + x + "/" + y + ".png";
+                }
+            });
+        }
+        else if (Objects.equals(mode, "satellite")) {
+            // Modo “satélite”
+            map.setTileSource(new XYTileSource("EsriWorldImagery", 0, 19, 256, ".jpg",
+                    new String[]{
+                            "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/"
+                    }) {
+                @Override
+                public String getTileURLString(long pMapTileIndex) {
+                    int z = MapTileIndex.getZoom(pMapTileIndex);
+                    int x = MapTileIndex.getX(pMapTileIndex);
+                    int y = MapTileIndex.getY(pMapTileIndex);
+                    return getBaseUrl() + z + "/" + y + "/" + x;
+                }
+            });
+        }
+        else { // Pone por defecto el mapa minimalista en caso de no haber ninguna preferencia guardada
+            map.setTileSource(new XYTileSource("CartoVoyager", 0, 20, 512, ".png",
+                    new String[] {
+                            "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
+                            "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
+                            "https://c.basemaps.cartocdn.com/rastertiles/voyager/" }) {
+                @Override
+                public String getTileURLString(long pMapTileIndex) {
+                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                            MapTileIndex.getX(pMapTileIndex) + "/" +
+                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
+                }
+            });
         }
 
         map.setMultiTouchControls(true);
-        centerMapOnLocation(FIXED_DESTINATION, 17.0); // Gazteiz
+        centerMapOnLocation(FIXED_DESTINATION, 17.0); // Gasteiz
     }
 
     private void centerMapOnLocation(GeoPoint point, double zoomLevel) {
@@ -1276,6 +1342,28 @@ public class MapActivity extends AppCompatActivity {
         });
         builder.setNegativeButton(R.string.cancelar, null);
         builder.show();
+    }
+
+    private void mostrarOpcionesMapa() {
+        String minMode = isNightMode() ? "dark" : "light";
+        final String[] modos = { minMode, "mapnik", "satellite" };
+        final String[] titulos = {
+                getString(R.string.Minimalista),
+                getString(R.string.Detallado),
+                getString(R.string.Satelite)
+        };
+
+        new AlertDialog.Builder(this, R.style.ThemeOverlay_Unigo_MaterialAlertDialog)
+                .setTitle(R.string.map)
+                .setSingleChoiceItems(titulos, -1, null)
+                .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
+                    int selected = ((AlertDialog)dialog).getListView().getCheckedItemPosition();
+                    if (selected >= 0) {
+                        applyMapMode(modos[selected]);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     @Override
