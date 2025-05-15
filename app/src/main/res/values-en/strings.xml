@@ -52,4 +52,8 @@
     <string name="Detallado">Detailed</string>
     <string name="Satelite">Satellite</string>
     <string name="Tema">Theme</string>
+    <string name="tema_sistema">System theme</string>
+    <string name="tema_claro">Light theme</string>
+    <string name="tema_oscuro">Dark theme</string>
+    <string name="menu_tema">Choose the theme</string>
 </resources>

@@ -29,6 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -92,6 +93,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -143,6 +145,7 @@ public class MapActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_activity);
+        initializeMap();
 
         // Configuración de UI
         setupWindow();
@@ -179,6 +182,10 @@ public class MapActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (myLocationOverlay != null) myLocationOverlay.enableMyLocation();
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        if (prefs.getString("mapa", "auto").equals("auto")) {
+            applyMapMode("auto");
+        }
     }
 
     @Override
@@ -215,7 +222,6 @@ public class MapActivity extends AppCompatActivity {
         } else {
             ivLogo.setImageResource(R.drawable.logo_light);
         }
-        initializeMap();
     }
 
     private void configureControls() {
@@ -434,6 +440,9 @@ public class MapActivity extends AppCompatActivity {
             else if (id == R.id.nav_mapa) {
                 mostrarOpcionesMapa();
             }
+            else if (id == R.id.nav_tema) {
+                mostrarDialogoTema();
+            }
             // Cerrar el drawer tras la selección
             drawerLayout.closeDrawer(GravityCompat.START);
             return true;
@@ -447,9 +456,7 @@ public class MapActivity extends AppCompatActivity {
 
     private void initializeMap() {
         SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
-        // Si no hay modo guardado, usar light/dark por defecto:
-        String defaultMode = isNightMode() ? "dark" : "light";
-        String mode = prefs.getString("mapa", defaultMode);
+        String mode = prefs.getString("mapa", "auto");
         applyMapMode(mode);
     }
 
@@ -461,84 +468,75 @@ public class MapActivity extends AppCompatActivity {
     }
 
     private void applyMapMode(String mode) {
-        // // Guardar la elección
+        //Guardar la configuración nueva
         SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
-        prefs.edit()
-                .putString("mapa", mode)
-                .apply();
+        prefs.edit().putString("mapa", mode).apply();
+        // Extraer la configuración actual
+        String actual = mode.equals("auto")
+                ? (isNightMode() ? "dark" : "light")
+                : mode;
 
-        Configuration.getInstance().load(getApplicationContext(), getPreferences(MODE_PRIVATE));
         map = findViewById(R.id.map);
 
-        if (Objects.equals(mode, "light")) {
-            map.setTileSource(new XYTileSource("CartoVoyager", 0, 20, 512, ".png",
-                    new String[] {
-                            "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
-                            "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
-                            "https://c.basemaps.cartocdn.com/rastertiles/voyager/" }) {
-                @Override
-                public String getTileURLString(long pMapTileIndex) {
-                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
-                            MapTileIndex.getX(pMapTileIndex) + "/" +
-                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
-                }
-            });
-        } else if (Objects.equals(mode, "dark")) {
-            map.setTileSource(new XYTileSource("CartoDark", 0, 20, 512, ".png",
-                    new String[] {
-                            "https://a.basemaps.cartocdn.com/dark_all/",
-                            "https://b.basemaps.cartocdn.com/dark_all/",
-                            "https://c.basemaps.cartocdn.com/dark_all/" }) {
-                @Override
-                public String getTileURLString(long pMapTileIndex) {
-                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
-                            MapTileIndex.getX(pMapTileIndex) + "/" +
-                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
-                }
-            });
-        } else if (Objects.equals(mode, "mapnik")) {
-            // Modo "Mapnik" (OSM clásico)
-            map.setTileSource(new XYTileSource("Mapnik", 0, 19, 256, ".png",
-                    new String[]{
-                            "https://tile.openstreetmap.org/"
-                    }) {
-                @Override
-                public String getTileURLString(long pMapTileIndex) {
-                    int z = MapTileIndex.getZoom(pMapTileIndex);
-                    int x = MapTileIndex.getX(pMapTileIndex);
-                    int y = MapTileIndex.getY(pMapTileIndex);
-                    return getBaseUrl() + z + "/" + x + "/" + y + ".png";
-                }
-            });
-        }
-        else if (Objects.equals(mode, "satellite")) {
-            // Modo “satélite”
-            map.setTileSource(new XYTileSource("EsriWorldImagery", 0, 19, 256, ".jpg",
-                    new String[]{
-                            "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/"
-                    }) {
-                @Override
-                public String getTileURLString(long pMapTileIndex) {
-                    int z = MapTileIndex.getZoom(pMapTileIndex);
-                    int x = MapTileIndex.getX(pMapTileIndex);
-                    int y = MapTileIndex.getY(pMapTileIndex);
-                    return getBaseUrl() + z + "/" + y + "/" + x;
-                }
-            });
-        }
-        else { // Pone por defecto el mapa minimalista en caso de no haber ninguna preferencia guardada
-            map.setTileSource(new XYTileSource("CartoVoyager", 0, 20, 512, ".png",
-                    new String[] {
-                            "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
-                            "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
-                            "https://c.basemaps.cartocdn.com/rastertiles/voyager/" }) {
-                @Override
-                public String getTileURLString(long pMapTileIndex) {
-                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
-                            MapTileIndex.getX(pMapTileIndex) + "/" +
-                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
-                }
-            });
+        switch (actual) {
+            case "light":
+                map.setTileSource(new XYTileSource("CartoVoyager", 0, 20, 512, ".png",
+                        new String[] {
+                                "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
+                                "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
+                                "https://c.basemaps.cartocdn.com/rastertiles/voyager/" }) {
+                    @Override
+                    public String getTileURLString(long pMapTileIndex) {
+                        return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                                MapTileIndex.getX(pMapTileIndex) + "/" +
+                                MapTileIndex.getY(pMapTileIndex) + "@2x.png";
+                    }}
+                );
+                break;
+            case "dark":
+                map.setTileSource(new XYTileSource("CartoDark", 0, 20, 512, ".png",
+                        new String[] {
+                                "https://a.basemaps.cartocdn.com/dark_all/",
+                                "https://b.basemaps.cartocdn.com/dark_all/",
+                                "https://c.basemaps.cartocdn.com/dark_all/" }) {
+                    @Override
+                    public String getTileURLString(long pMapTileIndex) {
+                        return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                                MapTileIndex.getX(pMapTileIndex) + "/" +
+                                MapTileIndex.getY(pMapTileIndex) + "@2x.png";
+                    }
+                });
+                break;
+            case "mapnik":
+                // Modo "Mapnik" (OSM clásico)
+                map.setTileSource(new XYTileSource("Mapnik", 0, 19, 256, ".png",
+                        new String[]{
+                                "https://tile.openstreetmap.org/"
+                        }) {
+                    @Override
+                    public String getTileURLString(long pMapTileIndex) {
+                        int z = MapTileIndex.getZoom(pMapTileIndex);
+                        int x = MapTileIndex.getX(pMapTileIndex);
+                        int y = MapTileIndex.getY(pMapTileIndex);
+                        return getBaseUrl() + z + "/" + x + "/" + y + ".png";
+                    }
+                });
+                break;
+            case"satellite":
+                // Modo “satélite”
+                map.setTileSource(new XYTileSource("EsriWorldImagery", 0, 19, 256, ".jpg",
+                        new String[]{
+                                "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/"
+                        }) {
+                    @Override
+                    public String getTileURLString(long pMapTileIndex) {
+                        int z = MapTileIndex.getZoom(pMapTileIndex);
+                        int x = MapTileIndex.getX(pMapTileIndex);
+                        int y = MapTileIndex.getY(pMapTileIndex);
+                        return getBaseUrl() + z + "/" + y + "/" + x;
+                    }
+                });
+                break;
         }
 
         map.setMultiTouchControls(true);
@@ -1345,17 +1343,19 @@ public class MapActivity extends AppCompatActivity {
     }
 
     private void mostrarOpcionesMapa() {
-        String minMode = isNightMode() ? "dark" : "light";
-        final String[] modos = { minMode, "mapnik", "satellite" };
+        final String[] modos = { "auto", "mapnik", "satellite" };
         final String[] titulos = {
                 getString(R.string.Minimalista),
                 getString(R.string.Detallado),
                 getString(R.string.Satelite)
         };
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        String current = prefs.getString("mapa", "auto");
+        int checked = Arrays.asList(modos).indexOf(current);
 
         new AlertDialog.Builder(this, R.style.ThemeOverlay_Unigo_MaterialAlertDialog)
                 .setTitle(R.string.map)
-                .setSingleChoiceItems(titulos, -1, null)
+                .setSingleChoiceItems(titulos, checked, null)
                 .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
                     int selected = ((AlertDialog)dialog).getListView().getCheckedItemPosition();
                     if (selected >= 0) {
@@ -1365,6 +1365,46 @@ public class MapActivity extends AppCompatActivity {
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
     }
+    private void mostrarDialogoTema() {
+        final String[] valores = { "auto", "light", "dark" };
+        final String[] titulos = {
+                getString(R.string.tema_sistema),
+                getString(R.string.tema_claro),
+                getString(R.string.tema_oscuro)
+        };
+
+        // Lee la preferencia actual para marcarla
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        String current = prefs.getString("tema", "auto");
+        int checked = Arrays.asList(valores).indexOf(current);
+
+        new AlertDialog.Builder(this, R.style.ThemeOverlay_Unigo_MaterialAlertDialog)
+                .setTitle(R.string.menu_tema)
+                .setSingleChoiceItems(titulos, checked, null)
+                .setPositiveButton(android.R.string.ok, (dlg, which) -> {
+                    int sel = ((AlertDialog)dlg).getListView().getCheckedItemPosition();
+                    if (sel >= 0) {
+                        setAppTheme(valores[sel]);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+    private void setAppTheme(String mode) {
+        // 1) Persistir elección
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        prefs.edit().putString("tema", mode).apply();
+
+        // 2) Configurar AppCompatDelegate
+        int nightMode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+        if ("light".equals(mode)) nightMode = AppCompatDelegate.MODE_NIGHT_NO;
+        else if ("dark".equals(mode)) nightMode = AppCompatDelegate.MODE_NIGHT_YES;
+        AppCompatDelegate.setDefaultNightMode(nightMode);
+
+        // 3) Recrear para que cambien estilos UI
+        applyMapMode("auto");
+    }
+
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -1380,6 +1420,10 @@ public class MapActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
         String idioma = prefs.getString("idioma", "es");
         LocaleHelper.setLocale(this, idioma);
+        String mapaMode = prefs.getString("mapa", "auto");
+        if ("auto".equals(mapaMode)) {
+            applyMapMode("auto");
+        }
     }
 
     private void fetchWeather(TextView tvTemp, TextView tvHumidity) {

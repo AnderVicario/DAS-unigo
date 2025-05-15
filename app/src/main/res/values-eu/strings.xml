@@ -52,4 +52,8 @@
     <string name="Detallado">Zehatza</string>
     <string name="Satelite">Satelite</string>
     <string name="Tema">Tema</string>
+    <string name="tema_sistema">"Mugikorraren tema "</string>
+    <string name="tema_claro">Argia</string>
+    <string name="tema_oscuro">Iluna</string>
+    <string name="menu_tema">Hautatu erabiliko den tema</string>
 </resources>
