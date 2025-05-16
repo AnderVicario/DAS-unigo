@@ -1,12 +1,15 @@
 package com.unigo.adapters;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.unigo.R;
@@ -40,7 +43,30 @@ public class TransportAdapter extends RecyclerView.Adapter<TransportAdapter.View
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Transport option = options.get(position);
-        holder.tvMode.setText(option.getMode());
+
+        ColorStateList tintList = ColorStateList.valueOf(
+                ContextCompat.getColor(this.context, R.color.onSurface)
+        );
+        switch (option.getMode()) {
+            case BUS:
+                holder.tvMode.setText(this.context.getString(R.string.autobus));
+                holder.imageView.setImageResource(R.drawable.bus_stop_marker);
+                holder.imageView.setImageTintList(tintList);
+                break;
+            case BIKE:
+                holder.tvMode.setText(this.context.getString(R.string.Bici));
+                holder.imageView.setImageResource(R.drawable.bike_parking_marker);
+                holder.imageView.setImageTintList(tintList);
+                break;
+            case FOOT:
+                holder.tvMode.setText(this.context.getString(R.string.a_pie));
+                holder.imageView.setImageResource(R.drawable.foot_marker);
+                holder.imageView.setImageTintList(tintList);
+                break;
+            default:
+                holder.imageView.setImageResource(R.drawable.ic_warning);
+                holder.imageView.setImageTintList(tintList);
+        }
         holder.tvDuration.setText(option.getFormattedDuration());
         holder.tvDistance.setText(option.getFormattedDistance());
 
@@ -58,10 +84,12 @@ public class TransportAdapter extends RecyclerView.Adapter<TransportAdapter.View
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvMode, tvDuration, tvDistance;
+        ImageView imageView;
 
         public ViewHolder(View itemView) {
             super(itemView);
             tvMode = itemView.findViewById(R.id.tv_mode);
+            imageView = itemView.findViewById(R.id.imageView);
             tvDuration = itemView.findViewById(R.id.tv_duration);
             tvDistance = itemView.findViewById(R.id.tv_distance);
         }

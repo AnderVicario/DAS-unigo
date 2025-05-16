@@ -49,10 +49,8 @@ import com.unigo.adapters.TransportAdapter;
 import com.unigo.models.api.GeoJsonLibrary;
 import com.unigo.models.api.GeoJsonParking;
 import com.unigo.models.api.GeoJsonStop;
-import com.unigo.models.api.NearStopResponse;
 import com.unigo.models.Transport;
 import com.unigo.models.api.RoutesResponse;
-import com.unigo.models.api.TransfersResponse;
 import com.unigo.utils.APIService;
 import com.unigo.utils.CustomInfoWindow;
 import com.unigo.utils.LocaleHelper;
@@ -64,7 +62,6 @@ import com.unigo.utils.TranslatorUtil;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.events.MapListener;
 import org.osmdroid.events.ScrollEvent;
@@ -96,10 +93,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -567,7 +562,8 @@ public class MapActivity extends AppCompatActivity {
 
             @Override
             public boolean longPressHelper(GeoPoint p) {
-                return false;
+                handleMapLongTap();
+                return true;
             }
         });
 
@@ -577,6 +573,11 @@ public class MapActivity extends AppCompatActivity {
     private void handleMapTap(GeoPoint position) {
         /*routeCalculator.clearExistingRoute();*/
         addNewMarker(position);
+    }
+
+    private void handleMapLongTap() {
+        routeCalculator.clearExistingRoute();
+        removeExistingMarker();
     }
 
     // -------------------
@@ -779,7 +780,7 @@ public class MapActivity extends AppCompatActivity {
                                 AtomicReference<Double> totalDistance = new AtomicReference<>(0.0);
                                 AtomicInteger routesCompleted = new AtomicInteger(0);
 
-                                String modeName = "Autobús";
+                                Transport.TransportMode modeName = Transport.TransportMode.BUS;
 
                                 Runnable checkAndCreateTransport = () -> {
                                     if (routesCompleted.get() == 3) {
@@ -865,10 +866,10 @@ public class MapActivity extends AppCompatActivity {
                         routeCalculator.calculateRoute(profile, start, destination, new RouteCalculator.RouteCallback() {
                             @Override
                             public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
-                                String modeName = "";
+                                Transport.TransportMode modeName = null;
                                 switch(profile) {
-                                    case "foot": modeName = "A pie"; break;
-                                    case "bike": modeName = "Bicicleta"; break;
+                                    case "foot": modeName = Transport.TransportMode.FOOT; break;
+                                    case "bike": modeName = Transport.TransportMode.BIKE; break;
                                 }
 
                                 transportOptions.add(new Transport(
