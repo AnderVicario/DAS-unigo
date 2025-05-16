@@ -24,6 +24,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -54,6 +55,8 @@ import com.unigo.models.Transport;
 import com.unigo.models.api.RoutesResponse;
 import com.unigo.utils.APIService;
 import com.unigo.utils.CustomInfoWindow;
+import com.unigo.utils.ForecastDay;
+import com.unigo.utils.ForecastDialogFragment;
 import com.unigo.utils.LocaleHelper;
 import com.unigo.utils.MarkerType;
 import com.unigo.utils.RouteCalculator;
@@ -101,6 +104,7 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.concurrent.atomic.AtomicReference;
@@ -448,6 +452,21 @@ public class MapActivity extends AppCompatActivity {
             }
             else if (id == R.id.nav_tema) {
                 mostrarDialogoTema();
+            }
+            else if (id == R.id.nav_tiempo) {
+                fetchForecastList(list -> {
+                    if (!list.isEmpty()) {
+                        // Fragment necesita ArrayList parcelable
+                        ForecastDialogFragment dialog =
+                                ForecastDialogFragment.newInstance(
+                                        new ArrayList<>(list));
+                        dialog.show(getSupportFragmentManager(),
+                                "forecastDialog");
+                    } else {
+                        Toast.makeText(this, R.string.no_data, Toast.LENGTH_SHORT).show();
+                    }
+                });
+                return true;
             }
             // Cerrar el drawer tras la selección
             drawerLayout.closeDrawer(GravityCompat.START);
@@ -1722,6 +1741,100 @@ public class MapActivity extends AppCompatActivity {
                 e.printStackTrace();
                 runOnUiThread(() -> tvMeteoDesc.setText(getString(R.string.no_data)));
             }
+        }).start();
+    }
+    private void fetchForecastList(Consumer<List<ForecastDay>> callback) {
+        new Thread(() -> {
+            List<ForecastDay> list = new ArrayList<>();
+            try {
+                URL url = new URL("https://opendata.euskadi.eus/contenidos/prevision_tiempo/"
+                        + "met_forecast/opendata/met_forecast.xml");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET"); conn.connect();
+                InputStream in = conn.getInputStream();
+
+                XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+                factory.setNamespaceAware(true);
+                XmlPullParser parser = factory.newPullParser();
+                parser.setInput(in, null);
+
+                // Variables temporales
+                boolean inForecast = false, inTargetCity = false, inTempMax = false, inTempMin = false;
+                boolean inEs = false, inEu = false, inSymbol = false;
+                String tempMaxStr = null, tempMinStr = null;
+                String dayAttr = null, descEs = null, descEu = null, iconPath = null;
+
+                int count = 0;
+                int eventType = parser.getEventType();
+                while (eventType != XmlPullParser.END_DOCUMENT && count < 3) {
+                    String tag = parser.getName();
+                    switch (eventType) {
+                        case XmlPullParser.START_TAG:
+                            if ("forecast".equals(tag)) {
+                                dayAttr = parser.getAttributeValue(null, "forecastDay");
+                                inForecast = true;
+                            } else if (inForecast && "cityForecastData".equals(tag)) {
+                                String city = parser.getAttributeValue(null, "cityName");
+                                inTargetCity = "Vitoria-Gasteiz".equals(city);
+                            } else if (inForecast && inTargetCity) {
+                                if ("es".equals(tag)) inEs = true;
+                                if ("eu".equals(tag)) inEu = true;
+                                if ("symbolImage".equals(tag)) inSymbol = true;
+                                if ("tempMax".equals(tag)) inTempMax = true;
+                                if ("tempMin".equals(tag)) inTempMin = true;
+                            }
+                            break;
+                        case XmlPullParser.TEXT:
+                            if (inForecast && inTargetCity) {
+                                if (inTempMax)    tempMaxStr = parser.getText().trim();
+                                if (inTempMin) tempMinStr = parser.getText().trim();
+                                if (inEs) descEs = parser.getText().trim();
+                                if (inEu) descEu = parser.getText().trim();
+                                if (inSymbol && iconPath == null) iconPath = parser.getText().trim();
+                            }
+                            break;
+                        case XmlPullParser.END_TAG:
+                            if ("tempMax".equals(tag)) inTempMax = false;
+                            else if ("tempMin".equals(tag)) inTempMin = false;
+                            else if ("symbolImage".equals(tag)) inSymbol = false;
+                            else if ("es".equals(tag)) inEs = false;
+                            else if ("eu".equals(tag)) inEu = false;
+                            else if ("cityForecastData".equals(tag) && inTargetCity) {
+                                // Al cerrar cada cityForecastData, hemos recogido un día completo
+                                // Montamos URL SVG
+                                String svgUrl = null;
+                                if (iconPath != null) {
+                                    Matcher m = Pattern.compile("(\\d+)\\.gif$").matcher(iconPath);
+                                    if (m.find()) {
+                                        String num = m.group(1);
+                                        svgUrl = "https://www.euskalmet.euskadi.eus/media/assets/icons/"
+                                                + "euskalmet/webmet00-i" + num + "d.svg";
+                                    }
+                                }
+                                list.add(new ForecastDay(dayAttr,
+                                        descEs != null ? descEs : "—",
+                                        descEu != null ? descEu : "—",
+                                        svgUrl, tempMinStr,
+                                        tempMaxStr));
+                                count++;
+                                // Reseteamos flags/temp para el siguiente forecast
+                                inForecast = inTargetCity = false;
+                                descEs = descEu = iconPath = null;
+                            } else if ("forecast".equals(tag)) {
+                                inForecast = false;
+                            }
+                            break;
+                    }
+                    eventType = parser.next();
+                }
+
+                in.close(); conn.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // Devolvemos al hilo UI
+            runOnUiThread(() -> callback.accept(list));
         }).start();
     }
 

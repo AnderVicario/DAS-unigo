@@ -56,4 +56,10 @@
     <string name="tema_claro">Tema claro</string>
     <string name="tema_oscuro">Tema oscuro</string>
     <string name="menu_tema">Selecciona el tema a utilizar</string>
+    <string name="forecast">Previsión</string>
+    <string name="forecast_title">Previsión metereológica</string>
+    <string name="day_today">Hoy</string>
+    <string name="day_tomorrow">Mañana</string>
+    <string name="day_next">Pasado mañana</string>
+    <string name="day_unknown">Desconocido</string>
 </resources>

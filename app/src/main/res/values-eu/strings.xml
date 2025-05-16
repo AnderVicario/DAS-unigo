@@ -56,4 +56,10 @@
     <string name="tema_claro">Argia</string>
     <string name="tema_oscuro">Iluna</string>
     <string name="menu_tema">Hautatu erabiliko den tema</string>
+    <string name="forecast">Eguraldia</string>
+    <string name="forecast_title">Eguraldiaren iragarpena</string>
+    <string name="day_today">Gaur</string>
+    <string name="day_tomorrow">Bihar</string>
+    <string name="day_next">Etzi</string>
+    <string name="day_unknown">Ezezaguna</string>
 </resources>

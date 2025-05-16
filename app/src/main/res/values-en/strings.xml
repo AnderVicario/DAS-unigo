@@ -56,4 +56,10 @@
     <string name="tema_claro">Light theme</string>
     <string name="tema_oscuro">Dark theme</string>
     <string name="menu_tema">Choose the theme</string>
+    <string name="forecast">Forecast</string>
+    <string name="forecast_title">Weather forecast</string>
+    <string name="day_today">Today</string>
+    <string name="day_tomorrow">Tomorrow</string>
+    <string name="day_next">The day after tomorrow</string>
+    <string name="day_unknown">Unknown</string>
 </resources>
