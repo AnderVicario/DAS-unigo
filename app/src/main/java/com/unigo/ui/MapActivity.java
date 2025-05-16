@@ -772,15 +772,18 @@ public class MapActivity extends AppCompatActivity {
                         for (RoutesResponse.RouteOption routeOption : routesResponse){
                             if (routeOption.type.equals("direct")){
                                 Log.d(TAG, "Viaje directo encontrado!");
-                                GeoPoint busOrigin = stops.findStopByID(routeOption.from_stop);
-                                GeoPoint busDestination = stops.findStopByID(routeOption.to_stop);
+                                int stop_1 = routeOption.from_stop;
+                                int stop_2 = routeOption.to_stop;
+                                String route_1 = routeOption.route_id;
+                                GeoPoint busOrigin = stops.findStopByID(stop_1);
+                                GeoPoint busDestination = stops.findStopByID(stop_2);
 
                                 List<List<GeoPoint>> segments = Collections.synchronizedList(new ArrayList<>(Arrays.asList(null, null, null)));
                                 AtomicInteger totalDuration = new AtomicInteger(0);
                                 AtomicReference<Double> totalDistance = new AtomicReference<>(0.0);
                                 AtomicInteger routesCompleted = new AtomicInteger(0);
 
-                                Transport.TransportMode modeName = Transport.TransportMode.BUS;
+                                Transport.TransportMode modeName = Transport.TransportMode.BUS_DIRECT;
 
                                 Runnable checkAndCreateTransport = () -> {
                                     if (routesCompleted.get() == 3) {
@@ -795,6 +798,10 @@ public class MapActivity extends AppCompatActivity {
                                                 totalDuration.get(),
                                                 fullRoute
                                         );
+
+                                        transport.setStop1(stop_1);
+                                        transport.setStop2(stop_2);
+                                        transport.setRoute1(route_1);
 
                                         transportOptions.add(transport);
                                         runOnUiThread(() -> adapter.notifyDataSetChanged());
