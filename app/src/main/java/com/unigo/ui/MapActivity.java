@@ -15,6 +15,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -62,6 +63,7 @@ import com.unigo.utils.TranslatorUtil;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.events.MapListener;
 import org.osmdroid.events.ScrollEvent;
@@ -513,6 +515,11 @@ public class MapActivity extends AppCompatActivity {
                 break;
             case "mapnik":
                 // Modo "Mapnik" (OSM clásico)
+                // Establecer User-Agent (para usar este mapa es necesario)
+                Context ctx = getApplicationContext();
+                Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
+                Configuration.getInstance().setUserAgentValue("UnigoApp/1.0");
+
                 map.setTileSource(new XYTileSource("Mapnik", 0, 19, 256, ".png",
                         new String[]{
                                 "https://tile.openstreetmap.org/"
