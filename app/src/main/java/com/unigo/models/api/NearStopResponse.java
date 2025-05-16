@@ -3,24 +3,61 @@ package com.unigo.models.api;
 import java.util.List;
 
 public class NearStopResponse {
-    public String stop_name;
-    public double distance_m;
-    public List<String> routes;
-    public boolean is_university_route;
+    public String type;
 
-    public String getStop_name() {
-        return stop_name;
+    // Para "direct"
+    public Integer stop_id;
+    public String route_id;
+
+    // Para ambos
+    public String departure;
+    public String arrival;
+    public int travel_time;
+
+    // Solo para "transfer"
+    public Integer initial_stop;
+    public Integer transfer_stop;
+    public String transfer_departure;
+    public Double total_distance;
+
+    // Getters
+    public String getType() {
+        return type;
     }
 
-    public double getDistance_m() {
-        return distance_m;
+    public Integer getStop_id() {
+        return stop_id;
     }
 
-    public List<String> getRoutes() {
-        return routes;
+    public String getRoute_id() {
+        return route_id;
     }
 
-    public boolean isIs_university_route() {
-        return is_university_route;
+    public String getDeparture() {
+        return departure;
+    }
+
+    public String getArrival() {
+        return arrival;
+    }
+
+    public int getTravel_time() {
+        return travel_time;
+    }
+
+    public Integer getInitial_stop() {
+        return initial_stop;
+    }
+
+    public Integer getTransfer_stop() {
+        return transfer_stop;
+    }
+
+    public String getTransfer_departure() {
+        return transfer_departure;
+    }
+
+    public Double getTotal_distance() {
+        return total_distance;
     }
 }

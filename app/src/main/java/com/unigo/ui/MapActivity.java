@@ -51,6 +51,7 @@ import com.unigo.models.api.GeoJsonParking;
 import com.unigo.models.api.GeoJsonStop;
 import com.unigo.models.api.NearStopResponse;
 import com.unigo.models.Transport;
+import com.unigo.models.api.RoutesResponse;
 import com.unigo.models.api.TransfersResponse;
 import com.unigo.utils.APIService;
 import com.unigo.utils.CustomInfoWindow;
@@ -92,6 +93,8 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -99,6 +102,7 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MapActivity extends AppCompatActivity {
 
@@ -333,6 +337,11 @@ public class MapActivity extends AppCompatActivity {
     private void configureBottomSheet() {
         LinearLayout bottomSheet = findViewById(R.id.bottom_sheet);
         LinearLayout zoomControlsContainer = findViewById(R.id.zoom_controls_container);
+        ImageButton recalculateButton = findViewById(R.id.button_recalculate);
+        recalculateButton.setOnClickListener(v -> {
+            routeCalculator.clearExistingRoute();
+            calculateAllRoutes(FIXED_DESTINATION);
+        });
 
         BottomSheetBehavior<LinearLayout> behavior = BottomSheetBehavior.from(bottomSheet);
 
@@ -680,61 +689,107 @@ public class MapActivity extends AppCompatActivity {
                     if ("car".equals(profile)) {
                         // Lógica específica para autobuses
                         APIService apiService = new APIService();
-
                         GeoJsonStop stops = apiService.getAllStops();
 
-                        // 1. Buscar parada más cercana
-                        NearStopResponse nearStop = apiService.findNearStop(
-                                start.getLatitude(),
-                                start.getLongitude(),
-                                400
-                        );
+                        List<RoutesResponse.RouteOption> routesResponse = apiService.findRoutes(
+                            start.getLatitude(),
+                            start.getLongitude());
 
-                        String originStop = nearStop.getStop_name();
-                        GeoPoint busOrigin = stops.findStopByName(originStop);
-
-                        if (nearStop == null || originStop == null) {
-                            Log.d(TAG, "No se encontraron paradas cercanas");
+                        if (routesResponse == null) {
+                            Log.d(TAG, "No se encontraron rutas para bus");
                             return;
                         }
 
-                        // 2. Obtener transferencias desde la parada
-                        TransfersResponse transfers = apiService.getSmartTransfers(originStop);
-                        if (transfers == null) {
-                            Log.d(TAG, "No se encontraron transferencias");
-                            return;
-                        }
+                        for (RoutesResponse.RouteOption routeOption : routesResponse){
+                            if (routeOption.type.equals("direct")){
+                                Log.d(TAG, "Viaje directo encontrado!");
+                                GeoPoint busOrigin = stops.findStopByID(routeOption.from_stop);
+                                GeoPoint busDestination = stops.findStopByID(routeOption.to_stop);
 
-                        for (TransfersResponse.DirectRoute directRoute : transfers.getDirectRoutes()) {
-                            String route = directRoute.getRoute();
-                            String routeName = directRoute.getRouteName();
-                            String finalStop = directRoute.getFinalStop();
-                            GeoPoint busDestination = stops.findStopByName(finalStop);
+                                List<List<GeoPoint>> segments = Collections.synchronizedList(new ArrayList<>(Arrays.asList(null, null, null)));
+                                AtomicInteger totalDuration = new AtomicInteger(0);
+                                AtomicReference<Double> totalDistance = new AtomicReference<>(0.0);
+                                AtomicInteger routesCompleted = new AtomicInteger(0);
 
-                            routeCalculator.calculateRoute("car", busOrigin, busDestination, new RouteCalculator.RouteCallback() {
-                                @Override
-                                public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
-                                    Transport busTransport = new Transport(
-                                            "Autobús",
-                                            distanceKm,
-                                            durationMinutes,
-                                            points
-                                    );
+                                String modeName = "Autobús";
 
-                                    transportOptions.add(busTransport);
-                                    runOnUiThread(() -> adapter.notifyDataSetChanged());
+                                Runnable checkAndCreateTransport = () -> {
+                                    if (routesCompleted.get() == 3) {
+                                        List<GeoPoint> fullRoute = new ArrayList<>();
+                                        for (List<GeoPoint> segment : segments) {
+                                            fullRoute.addAll(segment);
+                                        }
 
-                                }
+                                        Transport transport = new Transport(
+                                                modeName,
+                                                totalDistance.get(),
+                                                totalDuration.get(),
+                                                fullRoute
+                                        );
 
-                                @Override
-                                public void onRouteError(String message) {
-                                    Log.e(TAG, "Error en ruta a pie: " + message);
-                                }
-                            });
-                        }
+                                        transportOptions.add(transport);
+                                        runOnUiThread(() -> adapter.notifyDataSetChanged());
+                                    }
+                                };
 
-                        for (TransfersResponse.TransferAlternative transfer : transfers.getTransferAlternatives()) {
-                            return;
+                                // Inicio -> parada origen
+                                routeCalculator.calculateRoute("foot", start, busOrigin, new RouteCalculator.RouteCallback() {
+                                    @Override
+                                    public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
+                                        segments.set(0, points);
+                                        totalDistance.updateAndGet(v -> v + distanceKm);
+                                        totalDuration.addAndGet(durationMinutes);
+                                        routesCompleted.incrementAndGet();
+                                        checkAndCreateTransport.run();
+                                    }
+
+                                    @Override
+                                    public void onRouteError(String message) {
+                                        Log.e(TAG, "Error ruta inicio -> origen: " + message);
+                                    }
+                                });
+
+                                // Bus
+                                routeCalculator.calculateRoute("car", busOrigin, busDestination, new RouteCalculator.RouteCallback() {
+                                    @Override
+                                    public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
+                                        segments.set(1, points);
+                                        totalDistance.updateAndGet(v -> v + distanceKm);
+                                        totalDuration.addAndGet(durationMinutes);
+                                        routesCompleted.incrementAndGet();
+                                        checkAndCreateTransport.run();
+                                    }
+
+                                    @Override
+                                    public void onRouteError(String message) {
+                                        Log.e(TAG, "Error ruta bus: " + message);
+                                    }
+                                });
+
+                                // Parada destino -> destino final
+                                routeCalculator.calculateRoute("foot", busDestination, destination, new RouteCalculator.RouteCallback() {
+                                    @Override
+                                    public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
+                                        segments.set(2, points);
+                                        totalDistance.updateAndGet(v -> v + distanceKm);
+                                        totalDuration.addAndGet(durationMinutes);
+                                        routesCompleted.incrementAndGet();
+                                        checkAndCreateTransport.run();
+                                    }
+
+                                    @Override
+                                    public void onRouteError(String message) {
+                                        Log.e(TAG, "Error ruta destino -> destino final: " + message);
+                                    }
+                                });
+
+                            }
+                            else if (routeOption.type.equals("transfer_direct")) {
+                                //TODO
+                            }
+                            else if (routeOption.type.equals("transfer_walk")) {
+                                //TODO
+                            }
                         }
 
                     } else {

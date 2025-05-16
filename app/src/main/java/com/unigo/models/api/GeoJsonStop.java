@@ -37,9 +37,9 @@ public class GeoJsonStop {
         }
     }
 
-    public GeoPoint findStopByName (String stopName) {
+    public GeoPoint findStopByID (int stopID) {
         for (Feature feature : features) {
-            if (feature.properties.getStop_name().equals(stopName)) {
+            if (feature.properties.getStop_id() == stopID) {
                 return new GeoPoint(feature.geometry.coordinates.get(1), feature.geometry.coordinates.get(0));
             }
         }
