@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <ImageView
+        android:id="@+id/ivIcon"
+        android:layout_width="48dp"
+        android:layout_height="48dp" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_marginStart="8dp"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tvDay"
+            android:textStyle="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/onSurface"/>
+
+        <TextView
+            android:id="@+id/tvDesc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/onSurface"/>
+
+        <!-- Temperaturas -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/ivTempMaxIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/thermometer_high"
+                app:tint="@color/secondaryVariant" />
+
+            <TextView
+                android:id="@+id/tvTempMax"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"
+                android:textColor="@color/onSurface"/>
+
+            <TextView
+                android:layout_marginStart="8dp"
+                android:text="|"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/onSurface"/>
+
+            <ImageView
+                android:id="@+id/ivTempMinIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/thermometer_low"
+                app:tint="@color/secondary" />
+
+            <TextView
+                android:id="@+id/tvTempMin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"
+                android:textColor="@color/onSurface"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

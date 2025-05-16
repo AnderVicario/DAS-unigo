@@ -14,5 +14,9 @@
         android:icon="@drawable/theme_light_dark"
         android:title="@string/Tema" />
 
+    <item
+        android:id="@+id/nav_tiempo"
+        android:icon="@drawable/weather_partly_cloudy"
+        android:title="@string/forecast" />
 
 </menu>
