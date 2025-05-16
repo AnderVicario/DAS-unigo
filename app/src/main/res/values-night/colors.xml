@@ -25,4 +25,36 @@
     <color name="onBackground">#FFFFFF</color>
     <color name="onSurface">#FFFFFF</color>
     <color name="onError">#000000</color>
+
+    <!-- Colores de rutas -->
+    <color name="L1">#ffdd00</color>
+    <color name="L8">#faa61a</color>
+    <color name="LB">#f499c1</color>
+    <color name="L7">#a76534</color>
+    <color name="L10">#00a54f</color>
+    <color name="L9">#0066b3</color>
+    <color name="LE1">#d8f400</color>
+    <color name="L5">#8cc63f</color>
+    <color name="L6">#a066aa</color>
+    <color name="L3">#44c7f4</color>
+    <color name="LE3">#ace000</color>
+    <color name="LE6">#faa61a</color>
+    <color name="LE7">#ffdd00</color>
+    <color name="LE4">#6cb500</color>
+    <color name="LE8">#ffdd00</color>
+    <color name="LN1">#ace000</color>
+    <color name="LES">#c39e13</color>
+    <color name="LF">#f499c1</color>
+    <color name="LA">#f499c1</color>
+    <color name="LE5">#abe424</color>
+    <color name="LN3">#abe424</color>
+    <color name="LG1">#ffdd00</color>
+    <color name="LG2">#f499c1</color>
+    <color name="LG3">#44c7f4</color>
+    <color name="LG4">#ed1c24</color>
+    <color name="LN4">#faa61a</color>
+    <color name="LFN">#44c7f4</color>
+    <color name="LG6">#faa61a</color>
+    <color name="L4">#ed1c24</color>
+    <color name="LN2">#ffdd00</color>
 </resources>

@@ -1,5 +1,6 @@
 package com.unigo.adapters;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
@@ -66,6 +67,13 @@ public class TransportAdapter extends RecyclerView.Adapter<TransportAdapter.View
                 // elementos visibles
                 holder.tvStop1.setText(String.valueOf(option.getStop1()));
                 holder.tvRoute1.setText(option.getRoute1());
+                String color1 = "L" + option.getRoute1();
+                @SuppressLint("DiscouragedApi") int colorResId = context.getResources().getIdentifier(color1, "color", context.getPackageName());
+                if (colorResId != 0) {
+                    holder.tvRoute1.setBackgroundTintList(
+                            ColorStateList.valueOf(ContextCompat.getColor(context, colorResId))
+                    );
+                }
                 holder.tvStop2.setText(String.valueOf(option.getStop2()));
 
                 break;
