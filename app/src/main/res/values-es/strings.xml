@@ -44,4 +44,16 @@
     <string name="address">Dirección</string>
     <string name="close">Cerrar</string>
     <string name="no_data">No hay datos disponibles</string>
+    <string name="resumen">Resumen meterológico</string>
+    <string name="icon">Icono</string>
+    <string name="mediciones">Mediciones</string>
+    <string name="map">Cambiar mapa</string>
+    <string name="Minimalista">Minimalista</string>
+    <string name="Detallado">Detallado</string>
+    <string name="Satelite">Satélite</string>
+    <string name="Tema">Tema</string>
+    <string name="tema_sistema">Tema del dispositivo</string>
+    <string name="tema_claro">Tema claro</string>
+    <string name="tema_oscuro">Tema oscuro</string>
+    <string name="menu_tema">Selecciona el tema a utilizar</string>
 </resources>

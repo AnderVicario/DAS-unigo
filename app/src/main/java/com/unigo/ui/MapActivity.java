@@ -11,7 +11,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -30,6 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -59,6 +59,7 @@ import com.unigo.utils.LocaleHelper;
 import com.unigo.utils.MarkerType;
 import com.unigo.utils.RouteCalculator;
 import com.unigo.utils.SnackbarUtils;
+import com.unigo.utils.SvgUtil;
 import com.unigo.utils.TranslatorUtil;
 
 import org.json.JSONArray;
@@ -95,6 +96,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -102,6 +104,8 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MapActivity extends AppCompatActivity {
@@ -145,6 +149,7 @@ public class MapActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_activity);
+        initializeMap();
 
         // Configuración de UI
         setupWindow();
@@ -159,7 +164,8 @@ public class MapActivity extends AppCompatActivity {
         TextView tvTemp = header.findViewById(R.id.nav_temp);
         TextView tvHumidity = header.findViewById(R.id.nav_humidity);
         TextView tvMeteoDesc = header.findViewById(R.id.nav_meteo_desc);
-        fetchMeteo(tvMeteoDesc);
+        ImageView ivIcon = header.findViewById(R.id.nav_weather_icon);
+        fetchMeteo(tvMeteoDesc, ivIcon);
 
         fetchWeather(tvTemp, tvHumidity);
 
@@ -180,6 +186,10 @@ public class MapActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (myLocationOverlay != null) myLocationOverlay.enableMyLocation();
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        if (prefs.getString("mapa", "auto").equals("auto")) {
+            applyMapMode("auto");
+        }
     }
 
     @Override
@@ -211,10 +221,9 @@ public class MapActivity extends AppCompatActivity {
         ImageView ivLogo = findViewById(R.id.iv_logo);
         int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
         if (currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES) {
-            initializeMap("dark");
+
             ivLogo.setImageResource(R.drawable.logo_dark);
         } else {
-            initializeMap("light");
             ivLogo.setImageResource(R.drawable.logo_light);
         }
     }
@@ -437,6 +446,12 @@ public class MapActivity extends AppCompatActivity {
             if (id == R.id.nav_idioma) {
                 dialogoIdioma();
             }
+            else if (id == R.id.nav_mapa) {
+                mostrarOpcionesMapa();
+            }
+            else if (id == R.id.nav_tema) {
+                mostrarDialogoTema();
+            }
             // Cerrar el drawer tras la selección
             drawerLayout.closeDrawer(GravityCompat.START);
             return true;
@@ -448,40 +463,93 @@ public class MapActivity extends AppCompatActivity {
     // Configuración del MAPA
     // --------------------
 
-    private void initializeMap(String mode) {
-        Configuration.getInstance().load(getApplicationContext(), getPreferences(MODE_PRIVATE));
+    private void initializeMap() {
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        String mode = prefs.getString("mapa", "auto");
+        applyMapMode(mode);
+    }
+
+    // Helper para saber si estamos en tema nocturno:
+    private boolean isNightMode() {
+        int uiMode = getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return uiMode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    private void applyMapMode(String mode) {
+        //Guardar la configuración nueva
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        prefs.edit().putString("mapa", mode).apply();
+        // Extraer la configuración actual
+        String actual = mode.equals("auto")
+                ? (isNightMode() ? "dark" : "light")
+                : mode;
+
         map = findViewById(R.id.map);
 
-        if (Objects.equals(mode, "light")) {
-            map.setTileSource(new XYTileSource("CartoVoyager", 0, 20, 512, ".png",
-                    new String[] {
-                            "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
-                            "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
-                            "https://c.basemaps.cartocdn.com/rastertiles/voyager/" }) {
-                @Override
-                public String getTileURLString(long pMapTileIndex) {
-                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
-                            MapTileIndex.getX(pMapTileIndex) + "/" +
-                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
-                }
-            });
-        } else {
-            map.setTileSource(new XYTileSource("CartoDark", 0, 20, 512, ".png",
-                    new String[] {
-                            "https://a.basemaps.cartocdn.com/dark_all/",
-                            "https://b.basemaps.cartocdn.com/dark_all/",
-                            "https://c.basemaps.cartocdn.com/dark_all/" }) {
-                @Override
-                public String getTileURLString(long pMapTileIndex) {
-                    return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
-                            MapTileIndex.getX(pMapTileIndex) + "/" +
-                            MapTileIndex.getY(pMapTileIndex) + "@2x.png";
-                }
-            });
+        switch (actual) {
+            case "light":
+                map.setTileSource(new XYTileSource("CartoVoyager", 0, 20, 512, ".png",
+                        new String[] {
+                                "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
+                                "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
+                                "https://c.basemaps.cartocdn.com/rastertiles/voyager/" }) {
+                    @Override
+                    public String getTileURLString(long pMapTileIndex) {
+                        return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                                MapTileIndex.getX(pMapTileIndex) + "/" +
+                                MapTileIndex.getY(pMapTileIndex) + "@2x.png";
+                    }}
+                );
+                break;
+            case "dark":
+                map.setTileSource(new XYTileSource("CartoDark", 0, 20, 512, ".png",
+                        new String[] {
+                                "https://a.basemaps.cartocdn.com/dark_all/",
+                                "https://b.basemaps.cartocdn.com/dark_all/",
+                                "https://c.basemaps.cartocdn.com/dark_all/" }) {
+                    @Override
+                    public String getTileURLString(long pMapTileIndex) {
+                        return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                                MapTileIndex.getX(pMapTileIndex) + "/" +
+                                MapTileIndex.getY(pMapTileIndex) + "@2x.png";
+                    }
+                });
+                break;
+            case "mapnik":
+                // Modo "Mapnik" (OSM clásico)
+                map.setTileSource(new XYTileSource("Mapnik", 0, 19, 256, ".png",
+                        new String[]{
+                                "https://tile.openstreetmap.org/"
+                        }) {
+                    @Override
+                    public String getTileURLString(long pMapTileIndex) {
+                        int z = MapTileIndex.getZoom(pMapTileIndex);
+                        int x = MapTileIndex.getX(pMapTileIndex);
+                        int y = MapTileIndex.getY(pMapTileIndex);
+                        return getBaseUrl() + z + "/" + x + "/" + y + ".png";
+                    }
+                });
+                break;
+            case"satellite":
+                // Modo “satélite”
+                map.setTileSource(new XYTileSource("EsriWorldImagery", 0, 19, 256, ".jpg",
+                        new String[]{
+                                "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/"
+                        }) {
+                    @Override
+                    public String getTileURLString(long pMapTileIndex) {
+                        int z = MapTileIndex.getZoom(pMapTileIndex);
+                        int x = MapTileIndex.getX(pMapTileIndex);
+                        int y = MapTileIndex.getY(pMapTileIndex);
+                        return getBaseUrl() + z + "/" + y + "/" + x;
+                    }
+                });
+                break;
         }
 
         map.setMultiTouchControls(true);
-        centerMapOnLocation(FIXED_DESTINATION, 17.0); // Gazteiz
+        centerMapOnLocation(FIXED_DESTINATION, 17.0); // Gasteiz
     }
 
     private void centerMapOnLocation(GeoPoint point, double zoomLevel) {
@@ -1329,6 +1397,71 @@ public class MapActivity extends AppCompatActivity {
         builder.show();
     }
 
+    private void mostrarOpcionesMapa() {
+        final String[] modos = { "auto", "mapnik", "satellite" };
+        final String[] titulos = {
+                getString(R.string.Minimalista),
+                getString(R.string.Detallado),
+                getString(R.string.Satelite)
+        };
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        String current = prefs.getString("mapa", "auto");
+        int checked = Arrays.asList(modos).indexOf(current);
+
+        new AlertDialog.Builder(this, R.style.ThemeOverlay_Unigo_MaterialAlertDialog)
+                .setTitle(R.string.map)
+                .setSingleChoiceItems(titulos, checked, null)
+                .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
+                    int selected = ((AlertDialog)dialog).getListView().getCheckedItemPosition();
+                    if (selected >= 0) {
+                        applyMapMode(modos[selected]);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+    private void mostrarDialogoTema() {
+        final String[] valores = { "auto", "light", "dark" };
+        final String[] titulos = {
+                getString(R.string.tema_sistema),
+                getString(R.string.tema_claro),
+                getString(R.string.tema_oscuro)
+        };
+
+        // Lee la preferencia actual para marcarla
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        String current = prefs.getString("tema", "auto");
+        int checked = Arrays.asList(valores).indexOf(current);
+
+        new AlertDialog.Builder(this, R.style.ThemeOverlay_Unigo_MaterialAlertDialog)
+                .setTitle(R.string.menu_tema)
+                .setSingleChoiceItems(titulos, checked, null)
+                .setPositiveButton(android.R.string.ok, (dlg, which) -> {
+                    int sel = ((AlertDialog)dlg).getListView().getCheckedItemPosition();
+                    if (sel >= 0) {
+                        setAppTheme(valores[sel]);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+    private void setAppTheme(String mode) {
+        // 1) Persistir elección
+        SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
+        prefs.edit().putString("tema", mode).apply();
+
+        // 2) Configurar AppCompatDelegate
+        int nightMode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+        if ("light".equals(mode)) nightMode = AppCompatDelegate.MODE_NIGHT_NO;
+        else if ("dark".equals(mode)) nightMode = AppCompatDelegate.MODE_NIGHT_YES;
+        AppCompatDelegate.setDefaultNightMode(nightMode);
+
+        // 3) Recrear para que cambien estilos UI (si estaba en auto hay que recrearlo (con el nuevo tema))
+        String mapaMode = prefs.getString("mapa", "auto");
+        applyMapMode(mapaMode);
+    }
+
+
     @Override
     protected void attachBaseContext(Context newBase) {
         SharedPreferences prefs = newBase.getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
@@ -1343,6 +1476,10 @@ public class MapActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
         String idioma = prefs.getString("idioma", "es");
         LocaleHelper.setLocale(this, idioma);
+        String mapaMode = prefs.getString("mapa", "auto");
+        if ("auto".equals(mapaMode)) {
+            applyMapMode("auto");
+        }
     }
 
     private void fetchWeather(TextView tvTemp, TextView tvHumidity) {
@@ -1462,7 +1599,7 @@ public class MapActivity extends AppCompatActivity {
         }).start();
     }
 
-    private void fetchMeteo(TextView tvMeteoDesc) {
+    private void fetchMeteo(TextView tvMeteoDesc, ImageView ivIcon) {
         new Thread(() -> {
             try {
                 // 1. Conexión HTTP al XML
@@ -1481,11 +1618,13 @@ public class MapActivity extends AppCompatActivity {
 
                 // 3. Variables de control
                 boolean inTodayForecast = false;
-                boolean inTargetCity     = false;
-                boolean inEs              = false;
-                boolean inEu              = false;
-                String descEs             = null;
-                String descEu             = null;
+                boolean inTargetCity = false;
+                boolean inEs = false;
+                boolean inEu = false;
+                String descEs = null;
+                String descEu = null;
+                boolean inSymbolImage = false;
+                String iconPath = null;
 
                 // 4. Recorremos el documento
                 int eventType = parser.getEventType();
@@ -1494,17 +1633,17 @@ public class MapActivity extends AppCompatActivity {
                     switch (eventType) {
                         case XmlPullParser.START_TAG:
                             if ("forecast".equals(tag)) {
-                                // comprobar si son los datos de "hoy"
                                 String day = parser.getAttributeValue(null, "forecastDay");
                                 inTodayForecast = "today".equals(day);
                             } else if (inTodayForecast && "cityForecastData".equals(tag)) {
-                                // comprobar si es Vitoria-Gasteiz
                                 String city = parser.getAttributeValue(null, "cityName");
                                 inTargetCity = "Vitoria-Gasteiz".equals(city);
                             } else if (inTodayForecast && inTargetCity && "es".equals(tag)) {
                                 inEs = true;
                             } else if (inTodayForecast && inTargetCity && "eu".equals(tag)) {
                                 inEu = true;
+                            } else if (inTodayForecast && inTargetCity && "symbolImage".equals(tag)) {
+                                inSymbolImage = true;
                             }
                             break;
 
@@ -1513,19 +1652,21 @@ public class MapActivity extends AppCompatActivity {
                                 descEs = parser.getText().trim();
                             } else if (inTodayForecast && inTargetCity && inEu) {
                                 descEu = parser.getText().trim();
+                            } else if (inSymbolImage && iconPath == null) {
+                                iconPath = parser.getText().trim();
                             }
                             break;
 
                         case XmlPullParser.END_TAG:
-                            if ("cityForecastData".equals(tag) && inTargetCity) {
-                                // hemos terminado de leer la ciudad en "hoy"
-                                eventType = XmlPullParser.END_DOCUMENT; // salimos
+                            if ("symbolImage".equals(tag)) {
+                                inSymbolImage = false;
+                            } else if ("cityForecastData".equals(tag) && inTargetCity) {
+                                eventType = XmlPullParser.END_DOCUMENT;
                             } else if ("es".equals(tag)) {
                                 inEs = false;
                             } else if ("eu".equals(tag)) {
                                 inEu = false;
                             } else if ("forecast".equals(tag) && inTodayForecast) {
-                                // salimos si llegamos al fin del bloque "hoy" sin encontrar la ciudad
                                 inTodayForecast = false;
                             }
                             break;
@@ -1539,7 +1680,23 @@ public class MapActivity extends AppCompatActivity {
                 // 5. Mostrar en UI (fallback a guión si no existe)
                 final String outEs = descEs != null ? descEs : "—";
                 final String outEu = descEu != null ? descEu : "—";
+                String svgUrl = null;
+                if (iconPath != null) {
+                    // ejemplo iconPath = "/.../images/14.gif"
+                    Matcher m = Pattern.compile("(\\d+)\\.gif$").matcher(iconPath);
+                    if (m.find()) {
+                        String num = m.group(1);
+                        svgUrl = "https://www.euskalmet.euskadi.eus/media/assets/icons/euskalmet/" +
+                                "webmet00-i" + num + "d.svg";
+                    }
+                }
+                final String iconUrl = svgUrl;
                 runOnUiThread(() -> {
+                    // 5a. Cargamos icono si lo tenemos
+                    if (iconUrl != null) {
+                        SvgUtil.loadSvgIntoImageView(MapActivity.this, iconUrl, ivIcon);
+                    }
+                    // 5b. Texto según preferencia e idioma
                     SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
                     String idioma = prefs.getString("idioma", Locale.getDefault().getLanguage());
                     // Elegimos el origen
