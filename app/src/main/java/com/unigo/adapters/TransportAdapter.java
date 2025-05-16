@@ -54,16 +54,44 @@ public class TransportAdapter extends RecyclerView.Adapter<TransportAdapter.View
                 holder.ivMode.setImageResource(R.drawable.bus_stop_marker);
                 holder.ivMode.setImageTintList(tintList);
                 holder.routeDetails.setVisibility(View.VISIBLE);
+
+                // elementos invisibles
+                holder.ivArrow3.setVisibility(View.GONE);
+                holder.tvStop3.setVisibility(View.GONE);
+                holder.tvRoute2.setVisibility(View.GONE);
+                holder.tvStop4.setVisibility(View.GONE);
+                holder.ivArrow4.setVisibility(View.GONE);
+                holder.ivWalk3.setVisibility(View.GONE);
+
+                // elementos visibles
+                holder.tvStop1.setText(String.valueOf(option.getStop1()));
+                holder.tvRoute1.setText(option.getRoute1());
+                holder.tvStop2.setText(String.valueOf(option.getStop2()));
+
                 break;
             case BUS_TDIRECT:
                 holder.tvMode.setText(this.context.getString(R.string.autobus));
                 holder.ivMode.setImageResource(R.drawable.bus_stop_marker);
                 holder.ivMode.setImageTintList(tintList);
+                holder.routeDetails.setVisibility(View.VISIBLE);
+
+                // elementos invisibles
+                holder.ivArrow3.setVisibility(View.GONE);
+                holder.ivWalk2.setVisibility(View.GONE);
+
+                // elementos visibles
+                holder.tvStop1.setText(String.valueOf(option.getStop1()));
+                holder.tvRoute1.setText(option.getRoute1());
+                holder.tvStop2.setText(String.valueOf(option.getStop2()));
+                holder.tvStop3.setText(String.valueOf(option.getStop3()));
+                holder.tvRoute2.setText(option.getRoute2());
+                holder.tvStop4.setText(String.valueOf(option.getStop4()));
                 break;
             case BUS_TWALK:
                 holder.tvMode.setText(this.context.getString(R.string.autobus));
                 holder.ivMode.setImageResource(R.drawable.bus_stop_marker);
                 holder.ivMode.setImageTintList(tintList);
+                holder.routeDetails.setVisibility(View.VISIBLE);
                 break;
             case BIKE:
                 holder.tvMode.setText(this.context.getString(R.string.Bici));

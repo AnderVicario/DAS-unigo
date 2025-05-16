@@ -13,6 +13,8 @@ public class Transport {
     private List<GeoPoint> routePoints;
     private int stop1;
     private int stop2;
+    private int stop3;
+    private int stop4;
     private String route1;
     private String route2;
 
@@ -67,6 +69,22 @@ public class Transport {
 
     public void setStop2(int stop2) {
         this.stop2 = stop2;
+    }
+
+    public int getStop3() {
+        return stop3;
+    }
+
+    public void setStop3(int stop3) {
+        this.stop3 = stop3;
+    }
+
+    public int getStop4() {
+        return stop4;
+    }
+
+    public void setStop4(int stop4) {
+        this.stop4 = stop4;
     }
 
     public String getRoute1() {
