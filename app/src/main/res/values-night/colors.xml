@@ -2,7 +2,7 @@
 <resources>
     <!-- Colores principales -->
     <color name="primary">#24b32b</color>
-    <color name="primaryVariant">#a5bbc3</color>
+    <color name="primaryVariant">#241E4E</color>
     <color name="secondary">#136f61</color>
     <color name="secondaryVariant">#ac0355</color>
 
