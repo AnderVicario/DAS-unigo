@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -65,6 +66,15 @@ public class TransportAdapter extends RecyclerView.Adapter<TransportAdapter.View
                 holder.ivWalk3.setVisibility(View.GONE);
 
                 // elementos visibles
+                holder.ivWalk1.setVisibility(View.VISIBLE);
+                holder.ivWalk2.setVisibility(View.VISIBLE);
+                holder.ivArrow1.setVisibility(View.VISIBLE);
+                holder.ivArrow2.setVisibility(View.VISIBLE);
+                holder.tvStop1.setVisibility(View.VISIBLE);
+                holder.tvStop2.setVisibility(View.VISIBLE);
+                holder.tvRoute1.setVisibility(View.VISIBLE);
+
+                // asignar valores
                 holder.tvStop1.setText(String.valueOf(option.getStop1()));
                 holder.tvRoute1.setText(option.getRoute1());
                 String color1 = "L" + option.getRoute1();
@@ -88,11 +98,38 @@ public class TransportAdapter extends RecyclerView.Adapter<TransportAdapter.View
                 holder.ivWalk2.setVisibility(View.GONE);
 
                 // elementos visibles
+                holder.ivArrow1.setVisibility(View.VISIBLE);
+                holder.ivArrow2.setVisibility(View.VISIBLE);
+                holder.ivArrow4.setVisibility(View.VISIBLE);
+                holder.ivWalk1.setVisibility(View.VISIBLE);
+                holder.ivWalk3.setVisibility(View.VISIBLE);
+                holder.tvRoute1.setVisibility(View.VISIBLE);
+                holder.tvRoute2.setVisibility(View.VISIBLE);
+                holder.tvStop1.setVisibility(View.VISIBLE);
+                holder.tvStop2.setVisibility(View.VISIBLE);
+                holder.tvStop3.setVisibility(View.VISIBLE);
+                holder.tvStop4.setVisibility(View.VISIBLE);
+
+                // asignar valores
                 holder.tvStop1.setText(String.valueOf(option.getStop1()));
                 holder.tvRoute1.setText(option.getRoute1());
+                color1 = "L" + option.getRoute1();
+                colorResId = context.getResources().getIdentifier(color1, "color", context.getPackageName());
+                if (colorResId != 0) {
+                    holder.tvRoute1.setBackgroundTintList(
+                            ColorStateList.valueOf(ContextCompat.getColor(context, colorResId))
+                    );
+                }
                 holder.tvStop2.setText(String.valueOf(option.getStop2()));
                 holder.tvStop3.setText(String.valueOf(option.getStop3()));
                 holder.tvRoute2.setText(option.getRoute2());
+                String color2 = "L" + option.getRoute2();
+                colorResId = context.getResources().getIdentifier(color2, "color", context.getPackageName());
+                if (colorResId != 0) {
+                    holder.tvRoute2.setBackgroundTintList(
+                            ColorStateList.valueOf(ContextCompat.getColor(context, colorResId))
+                    );
+                }
                 holder.tvStop4.setText(String.valueOf(option.getStop4()));
                 break;
             case BUS_TWALK:
@@ -100,20 +137,39 @@ public class TransportAdapter extends RecyclerView.Adapter<TransportAdapter.View
                 holder.ivMode.setImageResource(R.drawable.bus_stop_marker);
                 holder.ivMode.setImageTintList(tintList);
                 holder.routeDetails.setVisibility(View.VISIBLE);
+
+                // elementos visibles
+                holder.ivArrow3.setVisibility(View.VISIBLE);
+                holder.ivWalk2.setVisibility(View.VISIBLE);
+                holder.ivArrow1.setVisibility(View.VISIBLE);
+                holder.ivArrow2.setVisibility(View.VISIBLE);
+                holder.ivArrow4.setVisibility(View.VISIBLE);
+                holder.ivWalk1.setVisibility(View.VISIBLE);
+                holder.ivWalk3.setVisibility(View.VISIBLE);
+                holder.tvRoute1.setVisibility(View.VISIBLE);
+                holder.tvRoute2.setVisibility(View.VISIBLE);
+                holder.tvStop1.setVisibility(View.VISIBLE);
+                holder.tvStop2.setVisibility(View.VISIBLE);
+                holder.tvStop3.setVisibility(View.VISIBLE);
+                holder.tvStop4.setVisibility(View.VISIBLE);
+
                 break;
             case BIKE:
                 holder.tvMode.setText(this.context.getString(R.string.Bici));
                 holder.ivMode.setImageResource(R.drawable.bike_parking_marker);
                 holder.ivMode.setImageTintList(tintList);
+                holder.routeDetails.setVisibility(View.GONE);
                 break;
             case FOOT:
                 holder.tvMode.setText(this.context.getString(R.string.a_pie));
                 holder.ivMode.setImageResource(R.drawable.foot_marker);
                 holder.ivMode.setImageTintList(tintList);
+                holder.routeDetails.setVisibility(View.GONE);
                 break;
             default:
                 holder.ivMode.setImageResource(R.drawable.ic_warning);
                 holder.ivMode.setImageTintList(tintList);
+                holder.routeDetails.setVisibility(View.GONE);
         }
         holder.tvDuration.setText(option.getFormattedDuration());
         holder.tvDistance.setText(option.getFormattedDistance());
