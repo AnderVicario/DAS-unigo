@@ -47,6 +47,10 @@ public class CustomInfoWindow extends InfoWindow {
         view.postDelayed(marker::closeInfoWindow, 4000);
     }
 
+    public MarkerType getType() {
+        return markerType;
+    }
+
     private void bindData(Marker marker, View view, MarkerType type) {
         switch (type) {
             case BIKE_PARKING:

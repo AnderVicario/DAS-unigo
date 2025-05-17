@@ -20,12 +20,14 @@ public class Transport {
     private int stop4;
     private String route1;
     private String route2;
+    private List<GeoPoint> stops;
 
     public Transport(TransportMode mode, double distance, int duration, List<GeoPoint> routePoints) {
         this.mode = mode;
         this.distance = distance;
         this.duration = duration;
         this.routePoints = routePoints;
+        stops = new ArrayList<>();
     }
 
     public enum TransportMode {
@@ -50,6 +52,10 @@ public class Transport {
 
     public List<GeoPoint> getRoutePoints() { return routePoints; }
 
+    public List<GeoPoint> getStops() {
+        return stops;
+    }
+
     public int getDuration() {
         return duration;
     }
@@ -62,7 +68,8 @@ public class Transport {
         return stop1;
     }
 
-    public void setStop1(int stop1) {
+    public void setStop1(int stop1, GeoPoint point) {
+        stops.add(point);
         this.stop1 = stop1;
     }
 
@@ -70,7 +77,8 @@ public class Transport {
         return stop2;
     }
 
-    public void setStop2(int stop2) {
+    public void setStop2(int stop2, GeoPoint point) {
+        stops.add(point);
         this.stop2 = stop2;
     }
 
@@ -78,7 +86,8 @@ public class Transport {
         return stop3;
     }
 
-    public void setStop3(int stop3) {
+    public void setStop3(int stop3, GeoPoint point) {
+        stops.add(point);
         this.stop3 = stop3;
     }
 
@@ -86,7 +95,8 @@ public class Transport {
         return stop4;
     }
 
-    public void setStop4(int stop4) {
+    public void setStop4(int stop4, GeoPoint point) {
+        stops.add(point);
         this.stop4 = stop4;
     }
 

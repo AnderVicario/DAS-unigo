@@ -651,7 +651,7 @@ public class MapActivity extends AppCompatActivity {
         marker.setSubDescription("Universidad de Vitoria-Gazteiz");
         marker.setIcon(ContextCompat.getDrawable(this, R.drawable.destination_marker));
 
-        marker.setInfoWindow(new CustomInfoWindow(map, MarkerType.LIBRARY));
+        marker.setInfoWindow(new CustomInfoWindow(map, MarkerType.DEFAULT));
         map.getOverlays().add(marker);
 
         myLocationOverlay = new MyLocationNewOverlay(
@@ -829,8 +829,8 @@ public class MapActivity extends AppCompatActivity {
                                                 fullRoute
                                         );
 
-                                        transport.setStop1(stop_1);
-                                        transport.setStop2(stop_2);
+                                        transport.setStop1(stop_1, busOrigin);
+                                        transport.setStop2(stop_2, busDestination);
                                         transport.setRoute1(route_1);
 
                                         transportOptions.add(transport);
@@ -927,10 +927,10 @@ public class MapActivity extends AppCompatActivity {
                                                 fullRoute
                                         );
 
-                                        transport.setStop1(stop_1);
-                                        transport.setStop2(stop_2);
-                                        transport.setStop3(stop_3);
-                                        transport.setStop4(stop_4);
+                                        transport.setStop1(stop_1, busOrigin1);
+                                        transport.setStop2(stop_2, busDestination1);
+                                        transport.setStop3(stop_3, busOrigin2);
+                                        transport.setStop4(stop_4, busDestination2);
                                         transport.setRoute1(route_1);
                                         transport.setRoute2(route_2);
 
@@ -1045,10 +1045,10 @@ public class MapActivity extends AppCompatActivity {
                                                 fullRoute
                                         );
 
-                                        transport.setStop1(stop_1);
-                                        transport.setStop2(stop_2);
-                                        transport.setStop3(stop_3);
-                                        transport.setStop4(stop_4);
+                                        transport.setStop1(stop_1, busOrigin1);
+                                        transport.setStop2(stop_2, busDestination1);
+                                        transport.setStop3(stop_3, busOrigin2);
+                                        transport.setStop4(stop_4, busDestination2);
                                         transport.setRoute1(route_1);
                                         transport.setRoute2(route_2);
 
@@ -1287,7 +1287,8 @@ public class MapActivity extends AppCompatActivity {
     private boolean isBusStopMarker(Overlay overlay) {
         if (!(overlay instanceof Marker)) return false;
         Marker marker = (Marker) overlay;
-        return marker.getTitle() != null && !marker.getTitle().equals(getString(R.string.selected_marker));
+        return marker.getInfoWindow() instanceof CustomInfoWindow
+                && ((CustomInfoWindow) marker.getInfoWindow()).getType() == MarkerType.BUS_STOP;
     }
 
     private void addDetailedMarkers() {
@@ -1405,7 +1406,8 @@ public class MapActivity extends AppCompatActivity {
     private boolean isBikeParkingMarker(Overlay overlay) {
         if (!(overlay instanceof Marker)) return false;
         Marker marker = (Marker) overlay;
-        return marker.getTitle() != null && marker.getTitle().startsWith("Parking");
+        return marker.getInfoWindow() instanceof CustomInfoWindow
+                && ((CustomInfoWindow) marker.getInfoWindow()).getType() == MarkerType.BIKE_PARKING;
     }
 
     private void addDetailedBikeMarkers() {
@@ -1576,7 +1578,8 @@ public class MapActivity extends AppCompatActivity {
     private boolean isLibraryMarker(Overlay overlay) {
         if (!(overlay instanceof Marker)) return false;
         Marker marker = (Marker) overlay;
-        return marker.getTitle() != null && marker.getTitle().equals(getString(R.string.library));
+        return marker.getInfoWindow() instanceof CustomInfoWindow
+                && ((CustomInfoWindow) marker.getInfoWindow()).getType() == MarkerType.LIBRARY;
     }
 
     private void addDetailedLibraryMarkers() {
