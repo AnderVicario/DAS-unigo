@@ -9,6 +9,10 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">8dp</item>
     </style>
+    <style name="rounded_corners_20" parent="@style/Theme.UniGO">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
     <style name="menu_theme" parent="@style/Theme.UniGO">
         <item name="android:textColor">@color/onSurface</item>
         <item name="android:textSize">16sp</item>
@@ -20,8 +24,11 @@
         <item name="android:background">@color/background</item>
         <item name="android:layout_width">match_parent</item>
     </style>
-    <style name="RoundedDialog" parent="">
+    <style name="RoundedDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
         <item name="android:background">@color/surface</item>
+        <item name="android:textColorPrimary">@color/onSurface</item>
+        <item name="android:textColorSecondary">@color/onSurface</item>
+        <item name="shapeAppearanceOverlay">@style/rounded_corners_20</item>
     </style>
     <style name="ThemeOverlay.Unigo.MaterialAlertDialog"
         parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
