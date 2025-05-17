@@ -4,5 +4,6 @@ public enum MarkerType {
     BIKE_PARKING,
     BUS_STOP,
     LIBRARY,
-    DEFAULT
+    DEFAULT,
+    ROUTE
 }

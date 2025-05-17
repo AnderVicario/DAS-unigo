@@ -56,18 +56,13 @@ import com.unigo.models.Transport;
 import com.unigo.models.api.RoutesResponse;
 import com.unigo.utils.APIService;
 import com.unigo.utils.CustomInfoWindow;
-import com.unigo.utils.ForecastDay;
 import com.unigo.utils.ForecastDialogFragment;
 import com.unigo.utils.LocaleHelper;
 import com.unigo.utils.MarkerType;
 import com.unigo.utils.RouteCalculator;
 import com.unigo.utils.SnackbarUtils;
-import com.unigo.utils.SvgUtil;
-import com.unigo.utils.TranslatorUtil;
 import com.unigo.utils.WeatherHelper;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.events.MapListener;
@@ -85,30 +80,15 @@ import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
-import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MapActivity extends AppCompatActivity {
@@ -145,6 +125,8 @@ public class MapActivity extends AppCompatActivity {
     private LibrariesOverlay librariesOverlay;
 
     private WeatherHelper weatherHelper;
+
+    private List<Marker> currentRouteMarkers = new ArrayList<>();
 
     // --------------------
     // Ciclo de vida
@@ -422,7 +404,10 @@ public class MapActivity extends AppCompatActivity {
 
         adapter.setOnTransportClickListener(transport -> {
             routeCalculator.clearExistingRoute();
+            removeRouteMarkers();
+
             routeCalculator.drawRoute(transport.getRoutePoints());
+            addRouteMarkers(transport.getStops());
             /*SnackbarUtils.showSuccess(
                     findViewById(android.R.id.content),
                     this,
@@ -495,6 +480,36 @@ public class MapActivity extends AppCompatActivity {
         int uiMode = getResources().getConfiguration().uiMode
                 & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
         return uiMode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    private void addRouteMarkers(List<GeoPoint> stops) {
+        if (stops == null || stops.isEmpty()) return;
+        int i = 0;
+
+        for (GeoPoint stop : stops) {
+            i++;
+            Marker marker = new Marker(map);
+            marker.setPosition(stop);
+            marker.setIcon(ContextCompat.getDrawable(this, R.drawable.bus_stop_marker));
+            marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+            marker.setTitle(getString(R.string.bus_stop) + " " + i);
+            marker.setInfoWindow(new CustomInfoWindow(map, MarkerType.ROUTE));
+
+            map.getOverlays().add(marker);
+            currentRouteMarkers.add(marker);
+        }
+        map.invalidate(); // Actualizar mapa
+    }
+
+    private void removeRouteMarkers() {
+        if (currentRouteMarkers.isEmpty()) return;
+
+        for (Marker marker : currentRouteMarkers) {
+            map.getOverlays().remove(marker);
+        }
+
+        currentRouteMarkers.clear();
+        map.invalidate();
     }
 
     private void applyMapMode(String mode) {
@@ -608,6 +623,7 @@ public class MapActivity extends AppCompatActivity {
 
     private void handleMapLongTap() {
         routeCalculator.clearExistingRoute();
+        removeRouteMarkers();
         removeExistingMarker();
     }
 
@@ -691,7 +707,6 @@ public class MapActivity extends AppCompatActivity {
     }
 
     private void addNewMarker(GeoPoint position) {
-        routeCalculator.clearExistingRoute();
         removeExistingMarker();
 
         currentMarker = new Marker(map);
