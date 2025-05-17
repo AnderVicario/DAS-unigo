@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
@@ -128,6 +129,7 @@ public class MapActivity extends AppCompatActivity {
 
     private List<Marker> currentRouteMarkers = new ArrayList<>();
 
+    private Boolean calculating = false;
     // --------------------
     // Ciclo de vida
     // --------------------
@@ -335,12 +337,16 @@ public class MapActivity extends AppCompatActivity {
         LinearLayout bottomSheet = findViewById(R.id.bottom_sheet);
         LinearLayout zoomControlsContainer = findViewById(R.id.zoom_controls_container);
         ImageButton recalculateButton = findViewById(R.id.button_recalculate);
+        RecyclerView recyclerView = findViewById(R.id.route_options);
+
         recalculateButton.setOnClickListener(v -> {
             routeCalculator.clearExistingRoute();
             calculateAllRoutes(FIXED_DESTINATION);
         });
 
         BottomSheetBehavior<LinearLayout> behavior = BottomSheetBehavior.from(bottomSheet);
+
+        behavior.setDraggable(true);
 
         int peekHeightPx = dpToPx(50);
         behavior.setPeekHeight(peekHeightPx);
@@ -349,10 +355,45 @@ public class MapActivity extends AppCompatActivity {
         behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         behavior.setSaveFlags(BottomSheetBehavior.SAVE_ALL);
 
+        recyclerView.setNestedScrollingEnabled(true);
+
+        recyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                if (behavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+                    behavior.setDraggable(false);
+                    if (e.getAction() == MotionEvent.ACTION_UP || e.getAction() == MotionEvent.ACTION_CANCEL) {
+                        behavior.setDraggable(true);
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                if (e.getAction() == MotionEvent.ACTION_UP || e.getAction() == MotionEvent.ACTION_CANCEL) {
+                    behavior.setDraggable(true);
+                }
+            }
+
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+                if (disallowIntercept) {
+                    behavior.setDraggable(false);
+                } else {
+                    behavior.setDraggable(true);
+                }
+            }
+        });
+
         // Callback para actualizar durante el drag
         behavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
-            public void onStateChanged(@NonNull View bs, int newState) { /* ... */ }
+            public void onStateChanged(@NonNull View bs, int newState) {
+                if (newState == BottomSheetBehavior.STATE_COLLAPSED) {
+                    behavior.setDraggable(true);
+                }
+            }
 
             @Override
             public void onSlide(@NonNull View bs, float slideOffset) {
@@ -368,13 +409,11 @@ public class MapActivity extends AppCompatActivity {
                 new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
-                        // Una vez medido, aplicamos la posición inicial (slideOffset = 0)
                         int height = bottomSheet.getHeight();
                         int baseOffset = dpToPx(70);
-                        float translationY = -baseOffset; // -baseOffset - (0 * ...)
+                        float translationY = -baseOffset;
                         zoomControlsContainer.setTranslationY(translationY);
 
-                        // Y eliminamos el listener para no repetir
                         bottomSheet.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     }
                 }
@@ -793,6 +832,7 @@ public class MapActivity extends AppCompatActivity {
         if (myLocationOverlay == null || myLocationOverlay.getMyLocation() == null) return;
 
         transportOptions.clear();
+        runOnUiThread(() -> adapter.notifyDataSetChanged());
         GeoPoint start = myLocationOverlay.getMyLocation();
 
         // Usamos un executor con pool de hilos para manejar las diferentes solicitudes

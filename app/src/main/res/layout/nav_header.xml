@@ -32,6 +32,7 @@
             android:text="@string/mediciones"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textStyle="bold"
+            android:textColor="@color/onBackground"
             android:textSize="12sp" />
 
         <!-- Aquí los datos del tiempo -->
@@ -39,12 +40,14 @@
             android:id="@+id/nav_temp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="@color/onBackground"
             android:text="Tº: --ºC" />
 
         <TextView
             android:id="@+id/nav_humidity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="@color/onBackground"
             android:text="H: -- %" />
 
     </LinearLayout>
@@ -66,6 +69,7 @@
             android:id="@+id/nav_meteo_desc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="@color/onBackground"
             android:text="@string/resumen"
             android:justificationMode="inter_word"/>
 
