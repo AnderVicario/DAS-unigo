@@ -191,7 +191,8 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bottom_sheet_background"
             android:orientation="vertical"
-            android:minHeight="600dp"
+            android:minHeight="350dp"
+            android:maxHeight="520dp"
             app:behavior_hideable="false"
             app:behavior_peekHeight="50dp"
             app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
