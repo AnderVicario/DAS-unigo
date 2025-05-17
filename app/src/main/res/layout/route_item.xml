@@ -19,46 +19,291 @@
         android:padding="16dp">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-            <ImageView
-                android:id="@+id/imageView"
+            <!-- Grupo izquierdo -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:paddingEnd="8dp"
-                app:srcCompat="@drawable/bike_parking_marker" />
+                android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tv_mode"
-                android:layout_width="match_parent"
+                <ImageView
+                    android:id="@+id/iv_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingEnd="8dp"
+                    app:srcCompat="@drawable/bike_parking_marker" />
+
+                <TextView
+                    android:id="@+id/tv_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ruta 1"
+                    android:textColor="@color/onSurface"
+                    android:textStyle="bold"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <!-- Espaciador que empuja a la derecha el siguiente grupo -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- Grupo derecho -->
+            <LinearLayout
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ruta 1"
-                android:textColor="@color/onSurface"
-                android:textStyle="bold"
-                android:textSize="16sp" />
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/iv_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingEnd="2dp"
+                    app:tint="@color/onSurface"
+                    app:srcCompat="@drawable/iv_time" />
+
+                <TextView
+                    android:id="@+id/tv_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="16m"
+                    android:textColor="@color/onSurface"
+                    android:layout_gravity="center"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tv_duration"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Descripción de la ruta"
-            android:textColor="@color/onSurface"
-            android:textSize="14sp"
-            android:paddingTop="4dp" />
+            android:orientation="horizontal"
+            android:layout_gravity="end">
 
-        <TextView
-            android:id="@+id/tv_distance"
+            <ImageView
+                android:id="@+id/iv_distance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingEnd="2dp"
+                app:tint="@color/onSurface"
+                app:srcCompat="@drawable/iv_distance" />
+
+            <TextView
+                android:id="@+id/tv_distance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="5,3km"
+                android:textColor="@color/onSurface"
+                android:layout_gravity="center"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/route_details"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Descripción de la ruta"
-            android:textColor="@color/onSurface"
-            android:textSize="14sp"
-            android:paddingTop="4dp" />
+            android:orientation="horizontal"
+            android:paddingTop="8dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/iv_walk1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingEnd="2dp"
+                app:srcCompat="@drawable/foot_marker"
+                app:tint="@color/onSurface" />
+
+            <ImageView
+                android:id="@+id/iv_arrow1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingEnd="2dp"
+                app:srcCompat="@drawable/iv_arrow"
+                app:tint="@color/onSurface" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tv_stop1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/round_button"
+                    android:backgroundTint="@color/secondary"
+                    android:padding="4dp"
+                    android:text="1271"
+                    android:textAlignment="center"
+                    android:textColor="@color/onSecondary"
+                    android:textSize="12sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tv_route1"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/round_button"
+                    android:backgroundTint="@color/secondaryVariant"
+                    android:padding="4dp"
+                    android:text="3"
+                    android:textAlignment="center"
+                    android:textColor="@color/onSecondary"
+                    android:textSize="12sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintDimensionRatio="1:1"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tv_stop2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/round_button"
+                    android:backgroundTint="@color/secondary"
+                    android:padding="4dp"
+                    android:text="1272"
+                    android:textAlignment="center"
+                    android:textColor="@color/onSecondary"
+                    android:textSize="12sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <ImageView
+                android:id="@+id/iv_arrow2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingEnd="2dp"
+                app:srcCompat="@drawable/iv_arrow"
+                app:tint="@color/onSurface" />
+
+            <ImageView
+                android:id="@+id/iv_walk2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingEnd="2dp"
+                app:srcCompat="@drawable/foot_marker"
+                app:tint="@color/onSurface" />
+
+            <ImageView
+                android:id="@+id/iv_arrow3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingEnd="2dp"
+                app:srcCompat="@drawable/iv_arrow"
+                app:tint="@color/onSurface" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tv_stop3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/round_button"
+                    android:backgroundTint="@color/secondary"
+                    android:padding="4dp"
+                    android:text="1271"
+                    android:textAlignment="center"
+                    android:textColor="@color/onSecondary"
+                    android:textSize="12sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tv_route2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/round_button"
+                    android:backgroundTint="@color/secondaryVariant"
+                    android:padding="4dp"
+                    android:text="8"
+                    android:textAlignment="center"
+                    android:textColor="@color/onSecondary"
+                    android:textSize="12sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintDimensionRatio="1:1"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tv_stop4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/round_button"
+                    android:backgroundTint="@color/secondary"
+                    android:padding="4dp"
+                    android:text="1272"
+                    android:textAlignment="center"
+                    android:textColor="@color/onSecondary"
+                    android:textSize="12sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <ImageView
+                android:id="@+id/iv_arrow4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingEnd="2dp"
+                app:srcCompat="@drawable/iv_arrow"
+                app:tint="@color/onSurface" />
+
+            <ImageView
+                android:id="@+id/iv_walk3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingEnd="2dp"
+                app:srcCompat="@drawable/foot_marker"
+                app:tint="@color/onSurface" />
+
+        </LinearLayout>
+
 
     </LinearLayout>
 

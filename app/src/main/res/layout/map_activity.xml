@@ -226,7 +226,7 @@
                     android:layout_height="wrap_content"
                     android:background="@color/transparent"
                     android:src="@drawable/ic_calculate"
-                    android:contentDescription="@string/zoom_out"
+                    android:contentDescription="Recalcular ruta"
                     android:layout_gravity="center"/>
 
             </LinearLayout>

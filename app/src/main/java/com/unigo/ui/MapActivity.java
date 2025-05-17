@@ -794,7 +794,7 @@ public class MapActivity extends AppCompatActivity {
                             start.getLatitude(),
                             start.getLongitude());
 
-                        if (routesResponse == null) {
+                        if (routesResponse.isEmpty()) {
                             Log.d(TAG, "No se encontraron rutas para bus");
                             return;
                         }
@@ -802,15 +802,18 @@ public class MapActivity extends AppCompatActivity {
                         for (RoutesResponse.RouteOption routeOption : routesResponse){
                             if (routeOption.type.equals("direct")){
                                 Log.d(TAG, "Viaje directo encontrado!");
-                                GeoPoint busOrigin = stops.findStopByID(routeOption.from_stop);
-                                GeoPoint busDestination = stops.findStopByID(routeOption.to_stop);
+                                int stop_1 = routeOption.from_stop;
+                                int stop_2 = routeOption.to_stop;
+                                String route_1 = routeOption.route_id;
+                                GeoPoint busOrigin = stops.findStopByID(stop_1);
+                                GeoPoint busDestination = stops.findStopByID(stop_2);
 
                                 List<List<GeoPoint>> segments = Collections.synchronizedList(new ArrayList<>(Arrays.asList(null, null, null)));
                                 AtomicInteger totalDuration = new AtomicInteger(0);
                                 AtomicReference<Double> totalDistance = new AtomicReference<>(0.0);
                                 AtomicInteger routesCompleted = new AtomicInteger(0);
 
-                                Transport.TransportMode modeName = Transport.TransportMode.BUS;
+                                Transport.TransportMode modeName = Transport.TransportMode.BUS_DIRECT;
 
                                 Runnable checkAndCreateTransport = () -> {
                                     if (routesCompleted.get() == 3) {
@@ -825,6 +828,10 @@ public class MapActivity extends AppCompatActivity {
                                                 totalDuration.get(),
                                                 fullRoute
                                         );
+
+                                        transport.setStop1(stop_1);
+                                        transport.setStop2(stop_2);
+                                        transport.setRoute1(route_1);
 
                                         transportOptions.add(transport);
                                         runOnUiThread(() -> adapter.notifyDataSetChanged());
@@ -884,7 +891,121 @@ public class MapActivity extends AppCompatActivity {
 
                             }
                             else if (routeOption.type.equals("transfer_direct")) {
-                                //TODO
+                                Log.d(TAG, "Viaje con transbordo directo encontrado!");
+                                RoutesResponse.Leg firstLeg = routeOption.first_leg;
+                                RoutesResponse.Leg secondLeg = routeOption.second_leg;
+
+                                int stop_1 = routeOption.from_stop;
+                                int stop_2 = firstLeg.arrival_stop;
+                                int stop_3 = firstLeg.arrival_stop;
+                                int stop_4 = secondLeg.arrival_stop;
+                                String route_1 = firstLeg.route;
+                                String route_2 = secondLeg.route;
+                                GeoPoint busOrigin1 = stops.findStopByID(stop_1);
+                                GeoPoint busDestination1 = stops.findStopByID(stop_2);
+                                GeoPoint busOrigin2 = busDestination1;
+                                GeoPoint busDestination2 = stops.findStopByID(stop_4);
+
+                                List<List<GeoPoint>> segments = Collections.synchronizedList(new ArrayList<>(Arrays.asList(null, null, null, null)));
+                                AtomicInteger totalDuration = new AtomicInteger(0);
+                                AtomicReference<Double> totalDistance = new AtomicReference<>(0.0);
+                                AtomicInteger routesCompleted = new AtomicInteger(0);
+
+                                Transport.TransportMode modeName = Transport.TransportMode.BUS_TDIRECT;
+
+                                Runnable checkAndCreateTransport = () -> {
+                                    if (routesCompleted.get() == 4) {
+                                        List<GeoPoint> fullRoute = new ArrayList<>();
+                                        for (List<GeoPoint> segment : segments) {
+                                            fullRoute.addAll(segment);
+                                        }
+
+                                        Transport transport = new Transport(
+                                                modeName,
+                                                totalDistance.get(),
+                                                totalDuration.get(),
+                                                fullRoute
+                                        );
+
+                                        transport.setStop1(stop_1);
+                                        transport.setStop2(stop_2);
+                                        transport.setStop3(stop_3);
+                                        transport.setStop4(stop_4);
+                                        transport.setRoute1(route_1);
+                                        transport.setRoute2(route_2);
+
+                                        transportOptions.add(transport);
+                                        runOnUiThread(() -> adapter.notifyDataSetChanged());
+                                    }
+                                };
+
+                                // Inicio -> parada origen
+                                routeCalculator.calculateRoute("foot", start, busOrigin1, new RouteCalculator.RouteCallback() {
+                                    @Override
+                                    public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
+                                        segments.set(0, points);
+                                        totalDistance.updateAndGet(v -> v + distanceKm);
+                                        totalDuration.addAndGet(durationMinutes);
+                                        routesCompleted.incrementAndGet();
+                                        checkAndCreateTransport.run();
+                                    }
+
+                                    @Override
+                                    public void onRouteError(String message) {
+                                        Log.e(TAG, "Error ruta inicio -> origen: " + message);
+                                    }
+                                });
+
+                                // Bus 1
+                                routeCalculator.calculateRoute("car", busOrigin1, busDestination1, new RouteCalculator.RouteCallback() {
+                                    @Override
+                                    public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
+                                        segments.set(1, points);
+                                        totalDistance.updateAndGet(v -> v + distanceKm);
+                                        totalDuration.addAndGet(durationMinutes);
+                                        routesCompleted.incrementAndGet();
+                                        checkAndCreateTransport.run();
+                                    }
+
+                                    @Override
+                                    public void onRouteError(String message) {
+                                        Log.e(TAG, "Error ruta bus: " + message);
+                                    }
+                                });
+
+                                // Bus 2
+                                routeCalculator.calculateRoute("car", busOrigin2, busDestination2, new RouteCalculator.RouteCallback() {
+                                    @Override
+                                    public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
+                                        segments.set(2, points);
+                                        totalDistance.updateAndGet(v -> v + distanceKm);
+                                        totalDuration.addAndGet(durationMinutes);
+                                        routesCompleted.incrementAndGet();
+                                        checkAndCreateTransport.run();
+                                    }
+
+                                    @Override
+                                    public void onRouteError(String message) {
+                                        Log.e(TAG, "Error ruta bus: " + message);
+                                    }
+                                });
+
+                                // Parada destino -> destino final
+                                routeCalculator.calculateRoute("foot", busDestination2, destination, new RouteCalculator.RouteCallback() {
+                                    @Override
+                                    public void onRouteCalculated(double distanceKm, int durationMinutes, List<GeoPoint> points) {
+                                        segments.set(3, points);
+                                        totalDistance.updateAndGet(v -> v + distanceKm);
+                                        totalDuration.addAndGet(durationMinutes);
+                                        routesCompleted.incrementAndGet();
+                                        checkAndCreateTransport.run();
+                                    }
+
+                                    @Override
+                                    public void onRouteError(String message) {
+                                        Log.e(TAG, "Error ruta destino -> destino final: " + message);
+                                    }
+                                });
                             }
                             else if (routeOption.type.equals("transfer_walk")) {
                                 //TODO

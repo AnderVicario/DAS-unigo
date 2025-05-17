@@ -1,0 +1,35 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+  <!-- Fondo transparente -->
+  <path
+      android:fillColor="@android:color/transparent"
+      android:pathData="M0,0h24v24H0z" />
+
+  <!-- Círculo del reloj -->
+  <path
+      android:strokeColor="#FF000000"
+      android:strokeWidth="2"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round"
+      android:pathData="M12,12m-9,0a9,9 0 1 0 18,0a9,9 0 1 0 -18,0" />
+
+  <!-- Manecilla horizontal (hora 3) -->
+  <path
+      android:strokeColor="#FF000000"
+      android:strokeWidth="2"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round"
+      android:pathData="M12,12h3.5" />
+
+  <!-- Manecilla vertical -->
+  <path
+      android:strokeColor="#FF000000"
+      android:strokeWidth="2"
+      android:strokeLineCap="round"
+      android:strokeLineJoin="round"
+      android:pathData="M12,7v5" />
+</vector>

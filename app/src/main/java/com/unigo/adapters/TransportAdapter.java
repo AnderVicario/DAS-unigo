@@ -1,11 +1,13 @@
 package com.unigo.adapters;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -48,24 +50,70 @@ public class TransportAdapter extends RecyclerView.Adapter<TransportAdapter.View
                 ContextCompat.getColor(this.context, R.color.onSurface)
         );
         switch (option.getMode()) {
-            case BUS:
+            case BUS_DIRECT:
                 holder.tvMode.setText(this.context.getString(R.string.autobus));
-                holder.imageView.setImageResource(R.drawable.bus_stop_marker);
-                holder.imageView.setImageTintList(tintList);
+                holder.ivMode.setImageResource(R.drawable.bus_stop_marker);
+                holder.ivMode.setImageTintList(tintList);
+                holder.routeDetails.setVisibility(View.VISIBLE);
+
+                // elementos invisibles
+                holder.ivArrow3.setVisibility(View.GONE);
+                holder.tvStop3.setVisibility(View.GONE);
+                holder.tvRoute2.setVisibility(View.GONE);
+                holder.tvStop4.setVisibility(View.GONE);
+                holder.ivArrow4.setVisibility(View.GONE);
+                holder.ivWalk3.setVisibility(View.GONE);
+
+                // elementos visibles
+                holder.tvStop1.setText(String.valueOf(option.getStop1()));
+                holder.tvRoute1.setText(option.getRoute1());
+                String color1 = "L" + option.getRoute1();
+                @SuppressLint("DiscouragedApi") int colorResId = context.getResources().getIdentifier(color1, "color", context.getPackageName());
+                if (colorResId != 0) {
+                    holder.tvRoute1.setBackgroundTintList(
+                            ColorStateList.valueOf(ContextCompat.getColor(context, colorResId))
+                    );
+                }
+                holder.tvStop2.setText(String.valueOf(option.getStop2()));
+
+                break;
+            case BUS_TDIRECT:
+                holder.tvMode.setText(this.context.getString(R.string.autobus));
+                holder.ivMode.setImageResource(R.drawable.bus_stop_marker);
+                holder.ivMode.setImageTintList(tintList);
+                holder.routeDetails.setVisibility(View.VISIBLE);
+
+                // elementos invisibles
+                holder.ivArrow3.setVisibility(View.GONE);
+                holder.ivWalk2.setVisibility(View.GONE);
+
+                // elementos visibles
+                holder.tvStop1.setText(String.valueOf(option.getStop1()));
+                holder.tvRoute1.setText(option.getRoute1());
+                holder.tvStop2.setText(String.valueOf(option.getStop2()));
+                holder.tvStop3.setText(String.valueOf(option.getStop3()));
+                holder.tvRoute2.setText(option.getRoute2());
+                holder.tvStop4.setText(String.valueOf(option.getStop4()));
+                break;
+            case BUS_TWALK:
+                holder.tvMode.setText(this.context.getString(R.string.autobus));
+                holder.ivMode.setImageResource(R.drawable.bus_stop_marker);
+                holder.ivMode.setImageTintList(tintList);
+                holder.routeDetails.setVisibility(View.VISIBLE);
                 break;
             case BIKE:
                 holder.tvMode.setText(this.context.getString(R.string.Bici));
-                holder.imageView.setImageResource(R.drawable.bike_parking_marker);
-                holder.imageView.setImageTintList(tintList);
+                holder.ivMode.setImageResource(R.drawable.bike_parking_marker);
+                holder.ivMode.setImageTintList(tintList);
                 break;
             case FOOT:
                 holder.tvMode.setText(this.context.getString(R.string.a_pie));
-                holder.imageView.setImageResource(R.drawable.foot_marker);
-                holder.imageView.setImageTintList(tintList);
+                holder.ivMode.setImageResource(R.drawable.foot_marker);
+                holder.ivMode.setImageTintList(tintList);
                 break;
             default:
-                holder.imageView.setImageResource(R.drawable.ic_warning);
-                holder.imageView.setImageTintList(tintList);
+                holder.ivMode.setImageResource(R.drawable.ic_warning);
+                holder.ivMode.setImageTintList(tintList);
         }
         holder.tvDuration.setText(option.getFormattedDuration());
         holder.tvDistance.setText(option.getFormattedDistance());
@@ -84,16 +132,38 @@ public class TransportAdapter extends RecyclerView.Adapter<TransportAdapter.View
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvMode, tvDuration, tvDistance;
-        ImageView imageView;
+        ImageView ivMode;
+        LinearLayout routeDetails;
+
+        // route_details
+        ImageView ivWalk1, ivArrow1, ivArrow2, ivWalk2, ivArrow3, ivArrow4, ivWalk3;
+        TextView tvStop1, tvRoute1, tvStop2, tvStop3, tvRoute2, tvStop4;
 
         public ViewHolder(View itemView) {
             super(itemView);
             tvMode = itemView.findViewById(R.id.tv_mode);
-            imageView = itemView.findViewById(R.id.imageView);
+            ivMode = itemView.findViewById(R.id.iv_mode);
             tvDuration = itemView.findViewById(R.id.tv_duration);
             tvDistance = itemView.findViewById(R.id.tv_distance);
+            routeDetails = itemView.findViewById(R.id.route_details);
+
+            // Inicialización de los elementos de route_details
+            ivWalk1 = itemView.findViewById(R.id.iv_walk1);
+            ivArrow1 = itemView.findViewById(R.id.iv_arrow1);
+            tvStop1 = itemView.findViewById(R.id.tv_stop1);
+            tvRoute1 = itemView.findViewById(R.id.tv_route1);
+            tvStop2 = itemView.findViewById(R.id.tv_stop2);
+            ivArrow2 = itemView.findViewById(R.id.iv_arrow2);
+            ivWalk2 = itemView.findViewById(R.id.iv_walk2);
+            ivArrow3 = itemView.findViewById(R.id.iv_arrow3);
+            tvStop3 = itemView.findViewById(R.id.tv_stop3);
+            tvRoute2 = itemView.findViewById(R.id.tv_route2);
+            tvStop4 = itemView.findViewById(R.id.tv_stop4);
+            ivArrow4 = itemView.findViewById(R.id.iv_arrow4);
+            ivWalk3 = itemView.findViewById(R.id.iv_walk3);
         }
     }
+
 
     public interface OnTransportClickListener {
         void onTransportClick(Transport transport);
