@@ -1618,7 +1618,15 @@ public class MapActivity extends AppCompatActivity {
     protected void attachBaseContext(Context newBase) {
         SharedPreferences prefs = newBase.getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
         String idioma = prefs.getString("idioma", "es");
-        super.attachBaseContext(LocaleHelper.setLocale(newBase, idioma));
+        String tema = prefs.getString("tema",   "auto");
+
+        Context localeUpdatedCtx = LocaleHelper.setLocale(newBase, idioma);
+
+        int nightMode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
+        if ("light".equals(tema)) nightMode = AppCompatDelegate.MODE_NIGHT_NO;
+        if ("dark".equals(tema))  nightMode = AppCompatDelegate.MODE_NIGHT_YES;
+        AppCompatDelegate.setDefaultNightMode(nightMode);
+        super.attachBaseContext(localeUpdatedCtx);
     }
 
     @Override
