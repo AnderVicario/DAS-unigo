@@ -422,13 +422,13 @@ public class MapActivity extends AppCompatActivity {
         adapter.setOnTransportClickListener(transport -> {
             routeCalculator.clearExistingRoute();
             routeCalculator.drawRoute(transport.getRoutePoints());
-            SnackbarUtils.showSuccess(
+            /*SnackbarUtils.showSuccess(
                     findViewById(android.R.id.content),
                     this,
                     "Ruta: " + transport.getMode() + "\n" +
                             transport.getFormattedDistance() + " - " +
                             transport.getFormattedDuration()
-            );
+            );*/
         });
     }
 
@@ -1010,17 +1010,18 @@ public class MapActivity extends AppCompatActivity {
                             else if (routeOption.type.equals("transfer_walk")) {
                                 Log.d(TAG, "Viaje con transbordo andando encontrado!");
                                 RoutesResponse.Leg firstLeg = routeOption.first_leg;
+                                RoutesResponse.Walk walk = routeOption.walk;
                                 RoutesResponse.Leg secondLeg = routeOption.second_leg;
 
                                 int stop_1 = routeOption.from_stop;
                                 int stop_2 = firstLeg.arrival_stop;
-                                int stop_3 = firstLeg.arrival_stop;
+                                int stop_3 = walk.to_stop;
                                 int stop_4 = secondLeg.arrival_stop;
                                 String route_1 = firstLeg.route;
                                 String route_2 = secondLeg.route;
                                 GeoPoint busOrigin1 = stops.findStopByID(stop_1);
                                 GeoPoint busDestination1 = stops.findStopByID(stop_2);
-                                GeoPoint busOrigin2 = busDestination1;
+                                GeoPoint busOrigin2 = stops.findStopByID(stop_3);
                                 GeoPoint busDestination2 = stops.findStopByID(stop_4);
 
                                 List<List<GeoPoint>> segments = Collections.synchronizedList(new ArrayList<>(Arrays.asList(null, null, null, null, null)));
@@ -1028,7 +1029,7 @@ public class MapActivity extends AppCompatActivity {
                                 AtomicReference<Double> totalDistance = new AtomicReference<>(0.0);
                                 AtomicInteger routesCompleted = new AtomicInteger(0);
 
-                                Transport.TransportMode modeName = Transport.TransportMode.BUS_TDIRECT;
+                                Transport.TransportMode modeName = Transport.TransportMode.BUS_TWALK;
 
                                 Runnable checkAndCreateTransport = () -> {
                                     if (routesCompleted.get() == 5) {

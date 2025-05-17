@@ -153,6 +153,27 @@ public class TransportAdapter extends RecyclerView.Adapter<TransportAdapter.View
                 holder.tvStop3.setVisibility(View.VISIBLE);
                 holder.tvStop4.setVisibility(View.VISIBLE);
 
+                // asignar valores
+                holder.tvStop1.setText(String.valueOf(option.getStop1()));
+                holder.tvRoute1.setText(option.getRoute1());
+                color1 = "L" + option.getRoute1();
+                colorResId = context.getResources().getIdentifier(color1, "color", context.getPackageName());
+                if (colorResId != 0) {
+                    holder.tvRoute1.setBackgroundTintList(
+                            ColorStateList.valueOf(ContextCompat.getColor(context, colorResId))
+                    );
+                }
+                holder.tvStop2.setText(String.valueOf(option.getStop2()));
+                holder.tvStop3.setText(String.valueOf(option.getStop3()));
+                holder.tvRoute2.setText(option.getRoute2());
+                color2 = "L" + option.getRoute2();
+                colorResId = context.getResources().getIdentifier(color2, "color", context.getPackageName());
+                if (colorResId != 0) {
+                    holder.tvRoute2.setBackgroundTintList(
+                            ColorStateList.valueOf(ContextCompat.getColor(context, colorResId))
+                    );
+                }
+                holder.tvStop4.setText(String.valueOf(option.getStop4()));
                 break;
             case BIKE:
                 holder.tvMode.setText(this.context.getString(R.string.Bici));

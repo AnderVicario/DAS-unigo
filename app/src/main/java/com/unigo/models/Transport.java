@@ -3,7 +3,10 @@ package com.unigo.models;
 import com.unigo.utils.RouteCalculator;
 
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Transport {
