@@ -1,0 +1,23 @@
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetLeft="16dp"
+    android:insetRight="16dp"
+    android:insetTop="4dp"
+    android:insetBottom="4dp">
+
+    <selector>
+        <!-- Estado seleccionado -->
+        <item android:state_checked="true">
+            <shape android:shape="rectangle">
+                <solid android:color="@color/background_10" />
+                <corners android:radius="40dp" />
+            </shape>
+        </item>
+        <!-- Estado normal -->
+        <item>
+            <shape android:shape="rectangle">
+                <solid android:color="@color/surface" />
+                <corners android:radius="40dp" />
+            </shape>
+        </item>
+    </selector>
+</inset>

@@ -3,20 +3,24 @@
     <item
         android:id="@+id/nav_idioma"
         android:icon="@drawable/translate_24px"
-        android:title="@string/idioma" />
+        android:title="@string/idioma"
+        android:iconTint="@color/onSurface"/>
     <item
         android:id="@+id/nav_mapa"
         android:icon="@drawable/map"
-        android:title="@string/map" />
+        android:title="@string/map"
+        android:iconTint="@color/onSurface"/>
 
     <item
         android:id="@+id/nav_tema"
         android:icon="@drawable/theme_light_dark"
-        android:title="@string/Tema" />
+        android:title="@string/Tema"
+        android:iconTint="@color/onSurface"/>
 
     <item
         android:id="@+id/nav_tiempo"
         android:icon="@drawable/weather_partly_cloudy"
-        android:title="@string/forecast" />
+        android:title="@string/forecast"
+        android:iconTint="@color/onSurface"/>
 
 </menu>
