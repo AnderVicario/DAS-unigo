@@ -45,6 +45,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.navigation.NavigationView;
 import com.unigo.R;
 import com.unigo.adapters.TransportAdapter;
@@ -1664,23 +1665,23 @@ public class MapActivity extends AppCompatActivity {
             }
         }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.ThemeOverlay_Unigo_MaterialAlertDialog);
-        builder.setTitle(R.string.selec_idioma);
-        builder.setSingleChoiceItems(idiomas, selectedIndex, (dialog, which) -> {
-            String idiomaSeleccionado = codigos[which];
-            if (!idiomaSeleccionado.equals(idiomaActual)) {
-                prefs.edit().putString("idioma", idiomaSeleccionado).apply();
+        new MaterialAlertDialogBuilder(this, R.style.RoundedDialog)
+                .setTitle(R.string.selec_idioma)
+                .setSingleChoiceItems(idiomas, selectedIndex, (dialog, which) -> {
+                    String idiomaSeleccionado = codigos[which];
+                    if (!idiomaSeleccionado.equals(idiomaActual)) {
+                        prefs.edit().putString("idioma", idiomaSeleccionado).apply();
 
-                // Reiniciar Activity para que se aplique el nuevo locale
-                Intent intent = new Intent(MapActivity.this, MapActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-                finish();
-            }
-            dialog.dismiss();
-        });
-        builder.setNegativeButton(R.string.cancelar, null);
-        builder.show();
+                        // Reiniciar Activity para aplicar el nuevo locale
+                        Intent intent = new Intent(MapActivity.this, MapActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        finish();
+                    }
+                    dialog.dismiss();
+                })
+                .setNegativeButton(R.string.cancelar, null)
+                .show();
     }
 
     private void mostrarOpcionesMapa() {
@@ -1694,11 +1695,11 @@ public class MapActivity extends AppCompatActivity {
         String current = prefs.getString("mapa", "auto");
         int checked = Arrays.asList(modos).indexOf(current);
 
-        new AlertDialog.Builder(this, R.style.ThemeOverlay_Unigo_MaterialAlertDialog)
+        new MaterialAlertDialogBuilder(this, R.style.RoundedDialog)
                 .setTitle(R.string.map)
                 .setSingleChoiceItems(titulos, checked, null)
                 .setPositiveButton(android.R.string.ok, (dialog, whichButton) -> {
-                    int selected = ((AlertDialog)dialog).getListView().getCheckedItemPosition();
+                    int selected = ((AlertDialog) dialog).getListView().getCheckedItemPosition();
                     if (selected >= 0) {
                         applyMapMode(modos[selected]);
                     }
@@ -1719,11 +1720,11 @@ public class MapActivity extends AppCompatActivity {
         String current = prefs.getString("tema", "auto");
         int checked = Arrays.asList(valores).indexOf(current);
 
-        new AlertDialog.Builder(this, R.style.ThemeOverlay_Unigo_MaterialAlertDialog)
+        new MaterialAlertDialogBuilder(this, R.style.RoundedDialog)
                 .setTitle(R.string.menu_tema)
                 .setSingleChoiceItems(titulos, checked, null)
                 .setPositiveButton(android.R.string.ok, (dlg, which) -> {
-                    int sel = ((AlertDialog)dlg).getListView().getCheckedItemPosition();
+                    int sel = ((AlertDialog) dlg).getListView().getCheckedItemPosition();
                     if (sel >= 0) {
                         setAppTheme(valores[sel]);
                     }

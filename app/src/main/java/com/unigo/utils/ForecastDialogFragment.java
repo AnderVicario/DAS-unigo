@@ -10,6 +10,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.unigo.R;
 import com.unigo.adapters.ForecastAdapter;
 
@@ -32,16 +33,19 @@ public class ForecastDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         list = getArguments().getParcelableArrayList(ARG_LIST);
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), R.style.ThemeOverlay_Unigo_MaterialAlertDialog);
+
         View view = requireActivity().getLayoutInflater()
                 .inflate(R.layout.fragment_forecast_dialog, null);
         RecyclerView rv = view.findViewById(R.id.rvForecast);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         rv.setAdapter(new ForecastAdapter(list, getContext()));
-        builder.setView(view)
+
+        // Usar MaterialAlertDialogBuilder con estilo personalizado
+        return new MaterialAlertDialogBuilder(requireContext(), R.style.RoundedDialog)
+                .setView(view)
                 .setTitle(R.string.forecast_title)
-                .setPositiveButton(android.R.string.ok, null);
-        return builder.create();
+                .setPositiveButton(android.R.string.ok, null)
+                .create();
     }
 }
 
