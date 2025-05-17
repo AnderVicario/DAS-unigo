@@ -5,9 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import com.unigo.models.api.GeoJsonLibrary;
 import com.unigo.models.api.GeoJsonParking;
 import com.unigo.models.api.GeoJsonStop;
-import com.unigo.models.api.NearStopResponse;
 import com.unigo.models.api.RoutesResponse;
-import com.unigo.models.api.TransfersResponse;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

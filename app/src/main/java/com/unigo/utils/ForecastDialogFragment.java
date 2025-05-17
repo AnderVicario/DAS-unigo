@@ -40,7 +40,7 @@ public class ForecastDialogFragment extends DialogFragment {
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         rv.setAdapter(new ForecastAdapter(list, getContext()));
 
-        // Usar MaterialAlertDialogBuilder con estilo personalizado
+        // MaterialAlertDialogBuilder con estilo personalizado
         return new MaterialAlertDialogBuilder(requireContext(), R.style.RoundedDialog)
                 .setView(view)
                 .setTitle(R.string.forecast_title)

@@ -252,7 +252,7 @@ public class MapActivity extends AppCompatActivity {
                         isAnimatingToMyLocation = false;
                     }, 600);  // Tiempo de espera para que se haga el zoom out y empiece la animación de movimiento
                 } else {
-                    // Si no es necesario el zoom out, centramos directamente
+                    // Si no es necesario el zoom out
                     map.getController().animateTo(myLoc, targetZoom, 1200L);
                     isAnimatingToMyLocation = false;
                 }
@@ -460,7 +460,6 @@ public class MapActivity extends AppCompatActivity {
     private void configureNavigation() {
         drawerLayout = findViewById(R.id.drawer_layout);
         navigationView = findViewById(R.id.nav_view);
-        Toolbar toolbar = findViewById(R.id.toolbar);
 
         // Configurar el botón de hamburguesa para abrir el drawer
         ImageButton menuButton = findViewById(R.id.menu_button);
@@ -835,7 +834,7 @@ public class MapActivity extends AppCompatActivity {
         runOnUiThread(() -> adapter.notifyDataSetChanged());
         GeoPoint start = myLocationOverlay.getMyLocation();
 
-        // Usamos un executor con pool de hilos para manejar las diferentes solicitudes
+        // Usamos un executor con pool de hilos para manejar las diferentes solicitudes, 2 para que vaya más rápido
         ExecutorService executor = Executors.newFixedThreadPool(2);
 
         for (String profile : PROFILE_PORT_MAP.keySet()) {
@@ -1469,10 +1468,10 @@ public class MapActivity extends AppCompatActivity {
     private void addDetailedBikeMarkers() {
         if (!showBikeParkings) return;
 
-        // 1. Obtener el bounding box actual del mapa
+        // Obtener el bounding box actual del mapa
         BoundingBox mapBounds = map.getBoundingBox();
 
-        // 2. Separar features en dentro/fuera del viewport
+        // Separar features en dentro/fuera del viewport
         List<GeoJsonParking.Feature> inViewport = new ArrayList<>();
         List<GeoJsonParking.Feature> outOfViewport = new ArrayList<>();
 
@@ -1490,7 +1489,7 @@ public class MapActivity extends AppCompatActivity {
             }
         }
 
-        // 3. Combinar listas (primero los del viewport)
+        // Combinar listas (primero los del viewport)
         List<GeoJsonParking.Feature> prioritizedFeatures = new ArrayList<>();
         prioritizedFeatures.addAll(inViewport);
         prioritizedFeatures.addAll(outOfViewport);
@@ -1788,17 +1787,17 @@ public class MapActivity extends AppCompatActivity {
                 .show();
     }
     private void setAppTheme(String mode) {
-        // 1) Persistir elección
+        // Persistir elección
         SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
         prefs.edit().putString("tema", mode).apply();
 
-        // 2) Configurar AppCompatDelegate
+        // Configurar AppCompatDelegate
         int nightMode = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
         if ("light".equals(mode)) nightMode = AppCompatDelegate.MODE_NIGHT_NO;
         else if ("dark".equals(mode)) nightMode = AppCompatDelegate.MODE_NIGHT_YES;
         AppCompatDelegate.setDefaultNightMode(nightMode);
 
-        // 3) Recrear para que cambien estilos UI (si estaba en auto hay que recrearlo (con el nuevo tema))
+        // para que cambien estilos UI (si estaba en auto hay que recrearlo (con el nuevo tema))
         String mapaMode = prefs.getString("mapa", "auto");
         applyMapMode(mapaMode);
     }
@@ -1822,7 +1821,7 @@ public class MapActivity extends AppCompatActivity {
     @Override
     public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        // Para que se vuelva a aplicar si hay cambios de configuración (p.e. rotación)
+        // Para que se vuelva a aplicar si hay cambios de configuración (por ejemplo rotación)
         SharedPreferences prefs = getSharedPreferences("MiAppPrefs", MODE_PRIVATE);
         String idioma = prefs.getString("idioma", "es");
         LocaleHelper.setLocale(this, idioma);
