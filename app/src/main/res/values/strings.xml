@@ -43,7 +43,7 @@
     <string name="address">Dirección</string>
     <string name="close">Cerrar</string>
     <string name="no_data">No hay datos disponibles</string>
-    <string name="resumen">Resumen meterológico</string>
+    <string name="resumen">Resumen meteorológico</string>
     <string name="icon">Icono</string>
     <string name="mediciones">Mediciones</string>
     <string name="map">Cambiar mapa</string>
@@ -56,7 +56,7 @@
     <string name="tema_oscuro">Tema oscuro</string>
     <string name="menu_tema">Selecciona el tema a utilizar</string>
     <string name="forecast">Previsión</string>
-    <string name="forecast_title">Previsión metereológica</string>
+    <string name="forecast_title">Previsión meteorológica</string>
     <string name="day_today">Hoy</string>
     <string name="day_tomorrow">Mañana</string>
     <string name="day_next">Pasado mañana</string>
