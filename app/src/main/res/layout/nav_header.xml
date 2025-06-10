@@ -71,7 +71,10 @@
             android:layout_height="wrap_content"
             android:textColor="@color/onBackground"
             android:text="@string/resumen"
-            android:justificationMode="inter_word"/>
+            android:justificationMode="inter_word"
+            android:maxLines="3"
+            android:ellipsize="end"
+            android:textSize="14sp"/>
 
     </LinearLayout>
 
