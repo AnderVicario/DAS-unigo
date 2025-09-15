@@ -18,7 +18,7 @@ import java.util.Locale;
 
 public class APIService {
 
-    private static final String BASE_URL = "http://umbra.ddns.net:5003";
+    private static final String BASE_URL = "http://umbra2.ddns.net:5003";
     private final OkHttpClient client;
     private final Gson gson;
 

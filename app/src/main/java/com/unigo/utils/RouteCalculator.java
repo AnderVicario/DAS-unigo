@@ -29,7 +29,7 @@ import okhttp3.Response;
 
 public class RouteCalculator {
     private static final String TAG = "RouteCalculator";
-    private static final String HOST = "http://umbra.ddns.net";
+    private static final String HOST = "http://umbra2.ddns.net";
     private Context context;
 
     // Mapa de perfiles y puertos
