@@ -6,6 +6,8 @@ The app allows users to explore routes **on foot, by bicycle, and by bus**, with
 
 The project is built with **Gradle** and can be run directly in **Android Studio**.  
 
+[![Alt text](https://img.youtube.com/vi/Tl850E5On2I/0.jpg)](https://www.youtube.com/watch?v=configuroweb)
+
 ## ⚙️ Requirements  
 
 - **Android 12.0 (API 31)** or higher.  
