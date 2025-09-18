@@ -5,7 +5,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-009485.svg?logo=fastapi&logoColor=white)](#)
 [![OpenData](https://img.shields.io/badge/OpenData-3385FF?logo=open-collective&logoColor=white)](#)
 
-**uniGO** is a mobility application designed to provide users with different ways to reach the **EHU (University of the Basque Country) campus in Vitoria-Gasteiz ** using open data provided by official sources and updated in real time.  
+**uniGO** is a mobility application designed to provide users with different ways to reach the **EHU (University of the Basque Country) campus in Vitoria-Gasteiz** using open data provided by official sources and updated in real time.  
 
 The app allows users to explore routes **on foot, by bicycle, and by bus**, with information updated **in real time**. In addition, uniGO offers details about nearby **points of interest**, such as **bike parking areas, public libraries, and other useful services for the university community**.
 
